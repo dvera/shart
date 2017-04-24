@@ -56,6 +56,3 @@ RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' &&
  R -e 'devtools::install_github("dvera/converge")' && \
  R -e 'devtools::install_github("dvera/gyro")' && \
  R -e 'devtools::install_github("dvera/travis")'
-
-echo $files | sed 's/ /","/' | sed 's/^/c("/g' | sed 's/$/")/'
-echo 'help <- function test , data=TRUE, is = "string"  ,here, c("but" , "dont", "see","this")' | sed -e ':a;s/^\(\(([^(]*)\|[^(,]*\)*\),/\1|/;ta' | tr '|' '\n'
