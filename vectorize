@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo $@ | sed 's/^ //g' | sed 's/ $//g' | sed 's/ /","/g' | sed 's/^/c("/g' | sed 's/$/")/'
