@@ -65,22 +65,36 @@ run-bwa-mem.sh <fastq1> <fastq2> <bwaIndex> <output_prefix> <nThreads>
 
 # initial QC
 
-```bash
-docker run vera/docker-4dn-repliseq fastqc $INPUT
-```
+run_fastqc.sh INPUT
 
 # clip and reqc
 
-cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o ${PREFIX}_clip.fastq $INPUT > ${PREFIX}_clip.fastq.log fastqc $INPUT
+run_cutadapt.sh INPUT PREFIX
 
 # align, sort, get stats
 
-run-bwa-mem-single.sh $INPUT $INDEX $PREFIX $NTHREADS run-sort-bam.sh $INPUT $PREFIX samtools stats $INPUT > ${INPUT}.samstats
+run_bwa-mem-single.sh INPUT INDEX PREFIX NTHREADS
 
 # remove duplicates and get stats
 
-samtools rmdup -s $INPUT ${PREFIX}_rmdup.bam samtools stats $INPUT > ${INPUT}.samstats
+run_samtools-rmdup.sh INPUT PREFIX
 
-bedtools makewindows -w $WINDOWSIZE -g /path/to/genome.chrom.sizes > ${PREFIX}_w${WINDOWSIZE}.bed bedtools bamtobed -i $INPUT | cut -f 1,2,3,4,5,6 | sort -k1,1 -k2,2n > ${PREFIX}.bed
+# make windows
 
-SCALE=$(echo "1000000/$(wc -l $INPUT | cut -d" " -f1)" | bc -l); bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | awk -v SCALE=$SCALE '{print $1,$2 ,$3 ,$4*SCALE }' OFS='\t' > $OUTPUT paste $EARLYBG $LATEBG | awk '{if($8 != 0 && $4 != 0){print $1,$2,$3,log($4/$8)/log(2)} }' OFS='\t' > $OUTPUT sort -m -k1,1 -k2,2n -o refdist.bg $INPUTBGS BGLINES=$(wc -l $INPUT | cut -d" " -f 1); paste <(sort -T . -k4,4g $INPUT) <(shuf -n $BGLINES $REFDIST | sort -k4,4g)' | cut -f 1,2,3,8 | sort -T . -k1,1 -k2,2n > $OUTPUT
+run_bedtools-makewindows.sh CHROMSIZES WINDOWSIZE PREFIX
+
+# calcaulte coverage
+
+run_bedtools-intersect.sh INPUT WINDOWS PREFIX
+
+# calculate log2 ratios
+
+run_log2ratio.sh EARLYBG LATEBG PREFIX
+
+# create a reference distribution from multiple files
+
+run_create-reference-distribution.sh PREFIX FILE1 FILE2 FILE3
+
+# quantile normalize
+
+run_quantile-normalization.sh INPUT REFERENCE PREFIX
