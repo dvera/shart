@@ -6,7 +6,7 @@ PREFIX=$2
 CURDIR=$PWD
 
 awk '{
-  if($0~\">\"){
+  if($0~">"){
     if(length(chrom)!=0){
       print chrom,clen
     };
