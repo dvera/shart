@@ -18,3 +18,5 @@ fi
 
 # run bwa
 bwa mem -t $nThreads $index $fastq | samtools view -Shb - > $prefix.bam
+
+samtools stats ${prefix}.bam > ${prefix}.bam.samstats
