@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
 INPUT=$1
-PREFIX=$3
+PREFIX=$2
 
 samtools rmdup -s $INPUT ${PREFIX}_rmdup.bam
-samtools stats $INPUT > ${INPUT}.samstats
-SAMLINES=$(wc -l $INPUT | cut -d" " -f 1)
-RSAMLINES=$(wc -l ${PREFIX}_rmdup.bam | cut -d" " -f 1)
+
+samtools stats ${PREFIX}_rmdup.bam > ${PREFIX}_rmdup.bam.samstats
+
+SAMLINES=$(samtools view -c $INPUT)
+
+RSAMLINES=$(samtools view -c ${PREFIX}_rmdup.bam)
+
 PCTNONZEROES=$(echo "${RSAMLINES}/${SAMLINES}" | bc -l)
-echo "${PCTNONZEROES} of the ${SAMLINES} reads were kept after removing duplicates" > ${PREFIX}_rmdup.bam.log
+
+echo "${PCTNONZEROES} of the ${SAMLINES} reads were kept after removing duplicates" | tee ${PREFIX}_rmdup.bam.log
