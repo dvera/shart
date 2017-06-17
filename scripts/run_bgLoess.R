@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 args = commandArgs(trailingOnly=TRUE)
-lspan <- args[1]
+lspan <- as.numeric(args[1])
 bgfiles <- args[2:length(args)]
 
 removeext <- function( filenames ){
