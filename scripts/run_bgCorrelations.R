@@ -1,0 +1,33 @@
+#!/usr/bin/env Rscript
+
+args = commandArgs(trailingOnly=TRUE)
+
+
+  cormethod="pearson"
+  
+  numfiles=length(args)
+  filelist=paste(args,collapse=" ")
+  cat("unifying intervals\n")
+  cmdString <- paste("bedtools unionbedg -header -names",filelist,"-filler NOSCORE -i",filelist,"| grep -v NOSCORE")
+  cmdString.call <- pipe(cmdString, open = "r")
+  result <- read.delim(cmdString.call, header = T, stringsAsFactors = FALSE)
+  close(cmdString.call)
+  bgscores <- result[,4:ncol(result)]
+
+  eg=expand.grid(1:numfiles,1:numfiles)
+  
+  cat("calculating pairwise correlations\n")
+  pb <- txtProgressBar(min = 0, max = numfiles*numfiles, style = 3)
+
+  lc=as.data.frame(
+    matrix(
+      unlist(lapply(1:nrow(eg),function(x){
+        val=cor(bgscores[[eg[x,1]]],bgscores[[eg[x,2]]],method=cormethod)
+        setTxtProgressBar(pb, x)
+        return(val)
+      })),
+    nrow=numfiles)
+  )
+  rownames(lc) <- args
+  colnames(lc) <- rownames(lc)
+  write.table(lc,"correlationMatrix.tsv",col.names=T,row.names=T,sep="\t",quote=F)
