@@ -4,6 +4,14 @@ args = commandArgs(trailingOnly=TRUE)
 lspan <- args[1]
 bgfiles <- args[2:length(args)]
 
+removeext <- function( filenames ){
+	filenames<-as.character(filenames)
+	for(i in 1:length(filenames)){
+		namevector<-unlist(strsplit(filenames[i],"\\."))
+		filenames[i]<-paste(namevector[1:(length(namevector)-1)],collapse=".")
+	}
+	filenames
+}
 
 	options(scipen=9999)
 	# assumes sorted bg
