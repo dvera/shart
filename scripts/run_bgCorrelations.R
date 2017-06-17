@@ -3,7 +3,7 @@
 args = commandArgs(trailingOnly=TRUE)
 
 
-  cormethod="pearson"
+  cormethod="spearman"
   
   numfiles=length(args)
   filelist=paste(args,collapse=" ")
