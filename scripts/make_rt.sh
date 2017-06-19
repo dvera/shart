@@ -49,10 +49,14 @@ ${DIR}/run_samtools-rmdup.sh ${LPREFIX}.bam ${LPREFIX}
 echo "making windows from genome"
 ${DIR}/run_bedtools-makewindows.sh ${GENOMEPREFIX}.chom.sizes $WINDOWSIZE ${GENOMEPREFIX}
 
+echo "counting number of reads in each window"
 ${DIR}/run_bedtools-intersect.sh ${EPREFIX}_rmdup.bam ${GENOMEPREFIX}_w${WINDOWSIZE}.bed ${EPREFIX}
 ${DIR}/run_bedtools-intersect.sh ${LPREFIX}_rmdup.bam ${GENOMEPREFIX}_w${WINDOWSIZE}.bed ${LPREFIX}
 
+echo "calculating log2 ratios of early/late reads"
 ${DIR}/run_log2ratio.sh ${EPREFIX}.bg ${LPREFIX}.bg ${EPREFIX}_log2ratio
+
+
 
 
 
