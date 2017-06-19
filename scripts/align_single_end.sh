@@ -17,6 +17,9 @@ while getopts ":i:t:" opt; do
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
+    [?])	print >&2 "Usage: $0 [-i] bwaIndex [-t threads] file1 [file2 fileN ... ]"
+		  exit 1
+      ;;
     :)
       echo "Option -$OPTARG requires an argument." >&2
       exit 1
@@ -56,14 +59,14 @@ for f in $FASTQFILES; do
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   
   # check to see input name has same as output name
-#   if [[ $OUTPUT == $f ]]; then
-#     echo "fastq file has inappropriate name, must be a fastq"
-#     exit 1
-#   fi
+  #   if [[ $OUTPUT == $f ]]; then
+  #     echo "fastq file has inappropriate name, must be a fastq"
+  #     exit 1
+  #   fi
   
   # align fastq file and run samstats
   bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
   samtools stats $OUTPUT > ${OUTPUT}.samstats
- done
+done
  
  
