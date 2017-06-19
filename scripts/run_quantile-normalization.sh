@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-INPUT=$1
-RTBG=${@:3}
-REFERENCE=$2
+RTBG=${@:2}
+REFERENCE=$1
 
 for INPUT in $RTBG; do
   OUTPUT=$(basename $INPUT | sed 's/\.bg/_qnorm\.bg/g')
