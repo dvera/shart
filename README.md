@@ -18,7 +18,7 @@ This repo contains the source files for a docker image stored in duplexa/4dn-hic
 
 ```
 git clone https://github.com/4dn-dcic/docker-4dn-hic
-cd docker-4dn-hic
+cd docker-4dn-repliseq
 ```
 
 ## Sample data
@@ -27,74 +27,83 @@ Sample data files that can be used for testing the tools are included in the `sa
 
 ## Tool wrappers
 
-Tool wrappers are under the `scripts` directory and follow naming conventions `run-xx.sh`. These wrappers are copied to the docker image at built time and may be used as a single step in a workflow.
+Tool wrappers are under the `scripts` directory and follow naming conventions `run_xx.sh`. These wrappers are copied to the docker image at build time and may be used as a single step in a workflow.
 
-```
-# default
-docker run vera/docker-4dn-repliseq
+# Usage
 
-# specific run command
-docker run vera/docker-4dn-repliseq <run-xx.sh> <arg1> <arg2> ...
-
-# may need -v option to mount data file/folder if they are used as arguments.
-docker run -v /data1/:/d1/:rw -v /data2/:/d2/:rw vera/docker-4dn-repliseq <run-xx.sh> /d1/file1 /d2/file2 ...
+### example
+```bash
+# execute a step on data in the current directory
+docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq <run-xx.sh> 
 ```
 
-### run-list.sh
-
-Default command for this docker image. It lists the run commands available.
-
-### run-bwa-mem-single.sh
-
-Alignment module for single-end repli-seq data, based on bwa-mem.
-
-- Input : a fastq file for an early- or late-enriched library
-- Output : a bam file (Lossless, not sorted by coordinate)
-
-#### Usage
-
-Run the following in the container.
-
-```
-run-bwa-mem.sh <fastq1> <fastq2> <bwaIndex> <output_prefix> <nThreads>
-# fastq1, fastq2 : input fastq files, either gzipped or not
-# bwaIndex : tarball for bwa index, .tgz.
-# output_prefix : prefix of the output bam file.
-# nThreads : number of threads
+### automated pipeline execution starting with fastq files
+```bash
+# make replication timing profiles from early and late fastq files using 5000-bp window sizes and 12 threads
+docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq make_rt.sh \
+  genome.fa 5000 12 sample1_early.fastq,sample2_early.fastq sample1_late.fastq,sample2_late.fastq
 ```
 
-# initial QC
+### step-by-step workflow
 
-run_fastqc.sh INPUT
+#### initial QC
+```
+fastqc.sh INPUT
+```
+#### clip and reqc
+```
+trim_adapters.sh INPUT
+```
+#### align, sort, get stats
+```
+align_single_end.sh INDEX NTHREADS INPUT
+```
+#### remove duplicates and get stats
+```
+remove_duplicates.sh INPUT
+```
+#### make windows
+```
+make_windows.sh CHROMSIZESFILE WINDOWSIZE
+```
+#### calcaulte coverage
+```
+window_density.sh WINDOWSFILE INPUT
+```
+#### filter windows
+```
+# filter a defined set of bedgraph files
+filter_windows.R SAMPLE1_E.bg SAMPLE1_L.bg SAMPLE2_E.bg SAMPLE2_L.bg SAMPLEn_E.bg SAMPLEn_L.bg
 
-# clip and reqc
+# or use a wildcard
+filter_windows.R *_[EL]_*_w5000.bg
+```
+#### calculate log2 ratios
+```
+calc_log2ratio.sh EARLYBG LATEBG
+```
+#### create a reference distribution from multiple files
+```
+make_average_distribution.sh PREFIX BG1 BG2 BGn
+```
+#### quantile normalize
+```
+quantile_normalize.sh INPUT REFERENCE
+```
+#### loess smooth profiles
+```
+loess_smooth.R SPANSIZE BG1 BG2 BGn
+```
 
-run_cutadapt.sh INPUT PREFIX
 
-# align, sort, get stats
 
-run_bwa-mem-single.sh INPUT INDEX PREFIX NTHREADS
 
-# remove duplicates and get stats
 
-run_samtools-rmdup.sh INPUT PREFIX
 
-# make windows
 
-run_bedtools-makewindows.sh CHROMSIZES WINDOWSIZE PREFIX
 
-# calcaulte coverage
 
-run_bedtools-intersect.sh INPUT WINDOWS PREFIX
 
-# calculate log2 ratios
 
-run_log2ratio.sh EARLYBG LATEBG PREFIX
 
-# create a reference distribution from multiple files
 
-run_create-reference-distribution.sh PREFIX FILE1 FILE2 FILE3
-
-# quantile normalize
-
-run_quantile-normalization.sh INPUT REFERENCE PREFIX
