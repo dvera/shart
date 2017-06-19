@@ -8,8 +8,12 @@
 while getopts ":i:t:" opt; do
   case $opt in
     t)
-      #echo "-t was triggered, Parameter: $OPTARG" >&2
-      NTHREADS=$OPTARG
+      if [[ "$OPTARG"=="-*" ]]; then
+				((OPTIND--))
+	    	NTHREADS=1
+			else
+				NTHREADS=$OPTARG
+      fi
       ;;
     i)
       INDEXFILE=$OPTARG
