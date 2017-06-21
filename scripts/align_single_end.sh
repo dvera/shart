@@ -22,7 +22,8 @@ while getopts ":i:t:" opt; do
       echo "Invalid option: -$OPTARG" >&2
       exit 1
       ;;
-    [?])	print >&2 "Usage: $0 [-i] bwaIndex [-t threads] file1 [file2 fileN ... ]"
+    [?])
+			print >&2 "Usage: $0 [-i] bwaIndex [-t threads] file1 [file2 fileN ... ]"
 		  exit 1
       ;;
     :)
@@ -34,6 +35,10 @@ done
 
 shift $((OPTIND-1))
 
+if [[ $# -eq 0 ]] ; then
+    echo 'no fastq files specified'
+    exit 1
+fi
 
 # DEBUG
 echo "index is $INDEXFILE"
