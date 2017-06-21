@@ -38,7 +38,7 @@ FASTQFILES=$@
 
 if [[ -f ${INDEXFILE}.bwt ]]; then
   INDEXPREFIX=$INDEXFILE
-elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE=~ \.tar\.gz$ ]]
+elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE =~ "\.tar\.gz$" ]]
   mkdir -p bwaIndex
   INDEXPATH=$(readlink -f $INDEXFILE)
   tar -C bwaIndex -x -f $INDEXPATH
