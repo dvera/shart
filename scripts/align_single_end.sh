@@ -31,6 +31,11 @@ while getopts ":i:t:" opt; do
   esac
 done
 
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+
 shift $((OPTIND-1))
 
 if [[ $# -eq 0 ]] ; then
