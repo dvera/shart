@@ -1,46 +1,46 @@
 #!/bin/bash
 
 usage() {
-	echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
-	echo "" 1>&2
-	echo "   bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
-	echo "" 1>&2
-	exit 1
+  echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
+  echo "" 1>&2
+  echo "  bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
+  echo "" 1>&2
+  exit 1
 }
 
-while getopts ":i:t:" opt; do
+while getopts ":i:t" opt; do
   case $opt in
-    t)
-#       if [[ "$OPTARG" == "-*" ]]; then
-# 				((OPTIND--))
-# 	    	NTHREADS=1
-# 			else
-				NTHREADS=$OPTARG
-      fi
-      ;;
-    i)
-      INDEXFILE=$OPTARG
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      usage
-			;;
-    [?])
-			usage
-			;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-			echo "" >&2
-			usage
-      ;;
+  t)
+    if [[ "$OPTARG" == "-*" ]]; then
+    ((OPTIND--))
+    NTHREADS=1
+    else
+    NTHREADS=$OPTARG
+   fi
+   ;;
+  i)
+   INDEXFILE=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
   esac
 done
 
 shift $((OPTIND-1))
 
 if [[ $# -eq 0 ]] ; then
-    echo 'no fastq files specified'
-    exit 1
+  echo 'no fastq files specified'
+  exit 1
 fi
 
 # DEBUG
@@ -66,21 +66,21 @@ for f in $FASTQFILES; do
   echo "processing $f"
   if [[ ! -f $f ]]; then
     echo "fastq file not found"
-    exit 1
+  exit 1
   elif [[ $f =~ \.gz$ ]]; then
     fo=${fastq/%\.gz/}
     gunzip -c $f > $fo
     f=$fo
   fi
-  
+
   # create output prefix
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   
   # check to see input name has same as output name
-  #   if [[ $OUTPUT == $f ]]; then
-  #     echo "fastq file has inappropriate name, must be a fastq"
-  #     exit 1
-  #   fi
+  #  if [[ $OUTPUT == $f ]]; then
+  #   echo "fastq file has inappropriate name, must be a fastq"
+  #   exit 1
+  #  fi
   
   # align fastq file and run samstats
   bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
