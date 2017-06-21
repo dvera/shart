@@ -84,9 +84,8 @@ done
 echo "calculating alignment statistics"
 for f in $FASTQFILES; do
   BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
-  INPUT=${BASE}.bam"
+  INPUT=${BASE}.bam
   OUTPUT=${BASE}.bam.samstats
-  echo "samtools stats $INPUT > $OUTPUT" 1>&2
   echo "samtools stats $INPUT > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
 
