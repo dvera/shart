@@ -89,10 +89,41 @@ for f in $FASTQFILES; do
   bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
 done
 
-echo "removing duplicates"
+echo "calculating alignment statistics"
 for f in $FASTQFILES; do
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   echo "samtools stats $OUTPUT > ${OUTPUT}.samstats"
 done | parallel --will-cite -j $NTHREADS
- 
- 
+
+echo "sorting and filtering alignments"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
+  INPUT=${BASE}.bam
+  OUTPUT=${BASE}_q20_sort.bam
+  echo "samtools view -bq 20 $INPUT | samtools sort -T $OUTPUT - > ${OUTPUT}"
+done | parallel --will-cite -j $NTHREADS
+
+echo "calculating alignment statistics"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
+  INPUT=${BASE}_q20_sort.bam
+  OUTPUT=${BASE}_q20_sort.bam.samstats
+  echo "samtools stats $INPUT > $OUTPUT"
+done | parallel --will-cite -j $NTHREADS
+
+echo "removing duplicates"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
+  INPUT=${BASE}_q20_sort.bam
+  OUTPUT=${BASE}_q20_sort_rmdup.bam
+  LOGFILE=${BASE}_q20_sort_rmdup.bam.pct
+  echo "samtools rmdup -s $INPUT $OUTPUT 2> $LOGFILE"
+done | parallel --will-cite -j $NTHREADS
+
+echo "calculating alignment statistics"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
+  INPUT=${BASE}_q20_sort_rmdup.bam
+  OUTPUT=${BASE}_q20_sort_rmdup.bam.samstats
+  echo "samtools stats $INPUT > $OUTPUT"
+done | parallel --will-cite -j $NTHREADS
