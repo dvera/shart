@@ -76,27 +76,22 @@ for f in $FASTQFILES; do
 
   # create output prefix
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
-  
-  # check to see input name has same as output name
-  #  if [[ $OUTPUT == $f ]]; then
-  #   echo "fastq file has inappropriate name, must be a fastq"
-  #   exit 1
-  #  fi
-  
   # align fastq file and run samstats
-  echo "bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT"
-  bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
+  echo "bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT"
+  bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
 done
 
 echo "calculating alignment statistics"
 for f in $FASTQFILES; do
-  OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
-  echo "samtools stats $OUTPUT > ${OUTPUT}.samstats"
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  INPUT=${BASE}.bam"
+  OUTPUT=${BASE}.bam.samstats
+  echo "samtools stats $INPUT > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
 
 echo "sorting and filtering alignments"
 for f in $FASTQFILES; do
-  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}.bam
   OUTPUT=${BASE}_q20_sort.bam
   echo "samtools view -bq 20 $INPUT | samtools sort -T $OUTPUT - > ${OUTPUT}"
@@ -104,7 +99,7 @@ done | parallel --will-cite -j $NTHREADS
 
 echo "calculating alignment statistics"
 for f in $FASTQFILES; do
-  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}_q20_sort.bam
   OUTPUT=${BASE}_q20_sort.bam.samstats
   echo "samtools stats $INPUT > $OUTPUT"
@@ -112,7 +107,7 @@ done | parallel --will-cite -j $NTHREADS
 
 echo "removing duplicates"
 for f in $FASTQFILES; do
-  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}_q20_sort.bam
   OUTPUT=${BASE}_q20_sort_rmdup.bam
   LOGFILE=${BASE}_q20_sort_rmdup.bam.pct
@@ -121,7 +116,7 @@ done | parallel --will-cite -j $NTHREADS
 
 echo "calculating alignment statistics"
 for f in $FASTQFILES; do
-  BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}_q20_sort_rmdup.bam
   OUTPUT=${BASE}_q20_sort_rmdup.bam.samstats
   echo "samtools stats $INPUT > $OUTPUT"
