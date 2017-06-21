@@ -61,13 +61,13 @@ echo "removing duplicates"
 for f in $FASTQFILES; do
   OUTPUT=$(basename $f | sed 's/\.bam$/_rmdup/g')
   echo "samtools rmdup -s $f $OUTPUT && samtools stats ${OUTPUT}.bam > ${OUTPUT}.bam.samstats"
-done | parallel --citation -j $NTHREADS
+done | parallel -j $NTHREADS
 
 for f in $FASTQFILES; do
   OUTPUT=$(basename $f | sed 's/\.bam$/_rmdup\.bam/g')
   #echo "SAMLINES=$(samtools view -c $f);RSAMLINES=$(samtools view -c $OUTPUT);PCTNONZEROES=$(echo "${RSAMLINES}/${SAMLINES}" | bc -l)
   echo $(echo "$(samtools view -c $OUTPUT)/$(samtools view -c $f)" | bc -l) > ${OUTPUT}.pct
-done | parallel --citation -j $NTHREADS
+done | parallel -j $NTHREADS
 
   
 
