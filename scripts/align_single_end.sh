@@ -68,7 +68,7 @@ for f in $FASTQFILES; do
     echo "fastq file not found"
   exit 1
   elif [[ $f =~ \.gz$ ]]; then
-    fo=${$f%\.gz/}
+    fo=${f%\.gz/}
     gunzip -c $f > $fo
     f=$fo
   fi
