@@ -34,6 +34,10 @@ done
 
 shift $((OPTIND-1))
 
+
+# DEBUG
+echo "index is $INDEXFILE"
+
 FASTQFILES=$@
 
 if [[ -f ${INDEXFILE}.bwt ]]; then
