@@ -70,12 +70,13 @@ fi
 ### CLIP ADAPTERS FROM READS ###
 ################################
 
+echo "clipping adapters from reads"
 for f in $FASTQFILES; do
  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
  OUTPUT=${BASE}_clip.fastq
  LOGFILE=${OUTPUT}.log
  echo "cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o $OUTPUT $f > $LOGFILE && fastqc -q $OUTPUT"
-done | parallel -j $NTHREADS
+done | parallel --will-cite -j $NTHREADS
 
 ################################
 ### ALIGN READS WITH BWA #######
