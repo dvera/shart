@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
   libssl-dev \
   openjdk-9-jre \
-  perl
+  perl \
+  parallel
 
 RUN wget -O- https://github.com/lh3/bwa/archive/v0.7.15.tar.gz | tar zx && \
  cd /root/bwa-0.7.15/ && \
