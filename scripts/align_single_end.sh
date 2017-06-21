@@ -1,10 +1,10 @@
 #!/bin/bash
 
 usage() {
-	print >&2 "Usage: $0 [-i] bwaIndex [-t threads] fastq1 [fastq2 ... fastqN ]"
-	print >&2 ""
-	print >&2 "   bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index"
-	print >&2 ""
+	echo "Usage: $0 [-i] bwaIndex [-t threads] fastq1 [fastq2 ... fastqN ]" 1>&2
+	echo "" 1>&2
+	echo "   bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
+	echo "" 1>&2
 	exit 1
 }
 
