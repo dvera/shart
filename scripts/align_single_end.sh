@@ -1,9 +1,12 @@
 #!/bin/bash
 
-#fastq=$1
-#index_file=$2
-#prefix=$3
-#nThreads=$4
+usage() {
+	print >&2 "Usage: $0 [-i] bwaIndex [-t threads] fastq1 [fastq2 ... fastqN ]"
+	print >&2 ""
+	print >&2 "   bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index"
+	print >&2 ""
+	exit 1
+}
 
 while getopts ":i:t:" opt; do
   case $opt in
@@ -20,15 +23,15 @@ while getopts ":i:t:" opt; do
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
+      usage
+			;;
     [?])
-			print >&2 "Usage: $0 [-i] bwaIndex [-t threads] file1 [file2 fileN ... ]"
-		  exit 1
-      ;;
+			usage
+			;;
     :)
       echo "Option -$OPTARG requires an argument." >&2
-      exit 1
+			echo "" >&2
+			usage
       ;;
   esac
 done
