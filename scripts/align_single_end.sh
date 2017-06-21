@@ -8,6 +8,10 @@ usage() {
   exit 1
 }
 
+################################
+### PARSE COMMAND LINE ARGS ####
+################################
+
 while getopts ":i:t:" opt; do
   case $opt in
   t)
@@ -35,7 +39,6 @@ if [ -z $NTHREADS ]; then
   NTHREADS=1
 fi
 
-
 shift $((OPTIND-1))
 
 if [[ $# -eq 0 ]] ; then
@@ -43,10 +46,13 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-# DEBUG
 echo "index is $INDEXFILE"
 
 FASTQFILES=$@
+
+################################
+### EXAMINE BWA INDEX ##########
+################################
 
 if [[ -f ${INDEXFILE}.bwt ]]; then
   INDEXPREFIX=$INDEXFILE
@@ -60,25 +66,28 @@ else
   exit 2
 fi
 
+################################
+### CLIP ADAPTERS FROM READS ###
+################################
+
+for f in $FASTQFILES; do
+ BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+ OUTPUT=${BASE}_clip.fastq
+ LOGFILE=${OUTPUT}.log
+ echo "cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o $OUTPUT $f > $LOGFILE && fastqc -q $OUTPUT"
+done | parallel -j $NTHREADS
+
+################################
+### ALIGN READS WITH BWA #######
+################################
+
 # run bwa
 for f in $FASTQFILES; do
-  # unzip file if compressed
-  echo "processing $f"
-  if [[ ! -f $f ]]; then
-    echo "fastq file not found"
-  exit 1
-  elif [[ $f == *.gz ]]; then
-    echo "extracting fastq files"
-    fo=${f%.*}
-    gunzip -c $f > $fo
-    f=$fo
-  fi
-
   # create output prefix
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   # align fastq file and run samstats
-  echo "bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT"
-  bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
+  echo "bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT"
+  bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
 done
 
 echo "calculating alignment statistics"
@@ -88,6 +97,10 @@ for f in $FASTQFILES; do
   OUTPUT=${BASE}.bam.samstats
   echo "samtools stats $INPUT > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
+
+################################
+### SORT/FILTER ALIGNMENTS #####
+################################
 
 echo "sorting and filtering alignments"
 for f in $FASTQFILES; do
@@ -105,6 +118,10 @@ for f in $FASTQFILES; do
   echo "samtools stats $INPUT > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
 
+################################
+### REMOVE PCR DUPLICATES ######
+################################
+
 echo "removing duplicates"
 for f in $FASTQFILES; do
   BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
@@ -121,3 +138,28 @@ for f in $FASTQFILES; do
   OUTPUT=${BASE}_q20_sort_rmdup.bam.samstats
   echo "samtools stats $INPUT > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
+
+################################
+### CONVERT BAM TO BED #########
+################################
+
+echo "converting bam to bed"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  INPUT=${BASE}_q20_sort_rmdup.bam
+  OUTPUT=${BASE}_q20_sort_rmdup.bed
+  echo "bedtools bamtobed -i $INPUT | cut -f 1,2,3,4,5,6 | sort -T . -k1,1 -k2,2n > $OUTPUT"
+done | parallel --will-cite -j $NTHREADS
+
+  # unzip file if compressed
+#   echo "processing $f"
+#   if [[ ! -f $f ]]; then
+#     echo "fastq file not found"
+#   exit 1
+#   elif [[ $f == *.gz ]]; then
+#     echo "extracting fastq files"
+#     fo=${f%.*}
+#     gunzip -c $f > $fo
+#     f=$fo
+#   fi
+
