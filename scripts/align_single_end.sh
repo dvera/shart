@@ -83,6 +83,8 @@ for f in $FASTQFILES; do
   #  fi
   
   # align fastq file and run samstats
+  echo "running the following command:"
+  echo "bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT"
   bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
   samtools stats $OUTPUT > ${OUTPUT}.samstats
 done
