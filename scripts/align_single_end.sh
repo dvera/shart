@@ -11,10 +11,10 @@ usage() {
 while getopts ":i:t:" opt; do
   case $opt in
     t)
-      if [[ "$OPTARG" == "-*" ]]; then
-				((OPTIND--))
-	    	NTHREADS=1
-			else
+#       if [[ "$OPTARG" == "-*" ]]; then
+# 				((OPTIND--))
+# 	    	NTHREADS=1
+# 			else
 				NTHREADS=$OPTARG
       fi
       ;;
