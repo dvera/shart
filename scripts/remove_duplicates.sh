@@ -59,8 +59,8 @@ done
 
 echo "removing duplicates"
 for f in $FASTQFILES; do
-  OUTPUT=$(basename $f | sed 's/\.bam$/_rmdup/g')
-  echo "samtools rmdup -s $f $OUTPUT && samtools stats ${OUTPUT}.bam > ${OUTPUT}.bam.samstats"
+  OUTPUT=$(basename $f | sed 's/\.bam$/_rmdup\.bam/g')
+  echo "samtools rmdup -s $f $OUTPUT && samtools stats ${OUTPUT} > ${OUTPUT}.samstats"
 done | parallel -j $NTHREADS
 
 for f in $FASTQFILES; do
