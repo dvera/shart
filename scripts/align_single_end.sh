@@ -77,7 +77,7 @@ for f in $FASTQFILES; do
   # create output prefix
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   # align fastq file and run samstats
-  echo "bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT"
+  echo "bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT"
   bwa mem -v 1 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
 done
 
