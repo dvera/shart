@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-	echo "Usage: $(basename $0) [-i] bwaIndex [-t threads] fastq1 [fastq2 ... fastqN ]" 1>&2
+	echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
 	echo "" 1>&2
 	echo "   bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
 	echo "" 1>&2
