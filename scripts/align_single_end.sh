@@ -93,6 +93,6 @@ echo "removing duplicates"
 for f in $FASTQFILES; do
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   echo "samtools stats $OUTPUT > ${OUTPUT}.samstats"
-done | parallel --citation --will-cite -j $NTHREADS
+done | parallel -j $NTHREADS
  
  
