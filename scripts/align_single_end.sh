@@ -51,6 +51,7 @@ fi
 # run bwa
 for f in $FASTQFILES; do
   # unzip file if compressed
+  echo "processing $f"
   if [[ ! -f $f ]]; then
     echo "fastq file not found"
     exit 1
