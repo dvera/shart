@@ -17,6 +17,7 @@ while getopts ":i:t:" opt; do
       ;;
     i)
       INDEXFILE=$OPTARG
+      ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       exit 1
