@@ -8,15 +8,10 @@ usage() {
   exit 1
 }
 
-while getopts ":i:t" opt; do
+while getopts ":i:t:" opt; do
   case $opt in
   t)
-    if [[ "$OPTARG" == "-*" ]]; then
-    ((OPTIND--))
-    NTHREADS=1
-    else
     NTHREADS=$OPTARG
-   fi
    ;;
   i)
    INDEXFILE=$OPTARG
