@@ -54,7 +54,7 @@ for f in $FASTQFILES; do
  OUTFILE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')_clip.fastq"
  LOGFILE=${OUTFILE}.log
  echo "cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o $OUTFILE $f > $LOGFILE && fastqc $OUTFILE"
-done 
+done | parallel -j $NTHREADS
 
 
  
