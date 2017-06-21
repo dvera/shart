@@ -69,7 +69,7 @@ for f in $FASTQFILES; do
   exit 1
   elif [[ $f == *.gz ]]; then
     echo "extracting fastq files"
-    fo=${f%\.gz/}
+    fo=${f%.*}
     gunzip -c $f > $fo
     f=$fo
   fi
