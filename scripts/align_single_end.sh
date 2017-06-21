@@ -86,13 +86,13 @@ for f in $FASTQFILES; do
   # align fastq file and run samstats
   echo "running the following command:"
   echo "bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT"
-  bwa mem -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
+  bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - > $OUTPUT
 done
 
 echo "removing duplicates"
 for f in $FASTQFILES; do
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   echo "samtools stats $OUTPUT > ${OUTPUT}.samstats"
-done | parallel -j $NTHREADS
+done | parallel --will-cite -j $NTHREADS
  
  
