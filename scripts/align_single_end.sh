@@ -12,7 +12,7 @@ usage() {
 ### PARSE COMMAND LINE ARGS ####
 ################################
 
-while getopts ":i:t:" opt; do
+while getopts ":i:t:g:" opt; do
   case $opt in
   t)
     NTHREADS=$OPTARG
@@ -46,6 +46,9 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
+#check if chromsizes or fasta specified with -g
+#check input files
+
 echo "index is $INDEXFILE"
 
 FASTQFILES=$@
@@ -56,11 +59,17 @@ FASTQFILES=$@
 
 if [[ -f ${INDEXFILE}.bwt ]]; then
   INDEXPREFIX=$INDEXFILE
-elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE =~ "\.tar\.gz$" ]]; then
+elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.tar.gz ]]; then
   mkdir -p bwaIndex
   INDEXPATH=$(readlink -f $INDEXFILE)
   tar -C bwaIndex -x -f $INDEXPATH
   INDEXPREFIX=$(readlink -f bwaIndex/*.bwt | sed 's/\.bwt$//g')
+elif  [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.fa* ]]; then
+  echo "fasta defined for index, making bwa index from fasta"
+  mkdir -p bwaIndex
+  INDEXFILE=$(readlink -f $INDEXFILE)
+  (cd bwaIndex && bwa index -p genome $INDEXFILE)
+  INDEXFILE=$(readlink -f bwaIndex)/genome
 else
   echo "index not found"
   exit 2
@@ -151,6 +160,16 @@ for f in $FASTQFILES; do
   OUTPUT=${BASE}_q20_sort_rmdup.bed
   echo "bedtools bamtobed -i $INPUT | cut -f 1,2,3,4,5,6 | sort -T . -k1,1 -k2,2n > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
+
+
+echo "calculating read densities"
+for f in $FASTQFILES; do
+  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  INPUT=${BASE}_q20_sort_rmdup.bed
+  OUTPUT=${BASE}_q20_sort_rmdup.bg
+  echo "bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | awk -v SCALE=$SCALE '{print $1,$2 ,$3 ,$4*SCALE }' OFS='\t'"
+done | parallel --will-cite -j $NTHREADS
+
 
   # unzip file if compressed
 #   echo "processing $f"
