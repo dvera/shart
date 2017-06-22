@@ -15,10 +15,19 @@ usage() {
 while getopts ":i:t:g:" opt; do
   case $opt in
   t)
-    NTHREADS=$OPTARG
+   NTHREADS=$OPTARG
+   ;;
+  w)
+   WINDOWSIZE=$OPTARG
+   ;;
+  c)
+   CHROMSIZES=$OPTARG
    ;;
   i)
    INDEXFILE=$OPTARG
+   ;;
+  m)
+   MEMPERTHREAD=$OPTARG
    ;;
   \?)
    echo "Invalid option: -$OPTARG" >&2
@@ -35,6 +44,66 @@ while getopts ":i:t:g:" opt; do
   esac
 done
 
+if [[ -z $WINDOWSIZE ]]; then
+  WINDOWSIZE=5000
+fi
+
+if [[ -z $MEMPERTHREAD ]]; then
+  MEMPERTHREAD=5G
+fi
+
+if [[ -z $INDEXFILE ]]; then
+  echo "must define an fasta or bwa index with -i"
+fi
+
+if [[ -z $CHROMSIZES ]]; then
+  if [[ $INDEXFILE == *.fa* ]]; then
+    awk '{
+      if($0~">"){
+        if(length(chrom)!=0){
+          print chrom,clen
+        }
+        chrom=$1;
+        clen=0
+       } else{
+        clen+=length($0)
+       }
+      } END{
+        print chrom,clen
+    }' OFS='\t' $INDEXFILE | tr -d '>' | sort -m -k1,1 > genome.chrom.sizes
+    CHROMSIZES="genome.chrom.sizes"
+  else
+    echo "must define fasta as index if no chrom sizes file defined"
+    exit 1
+  fi
+else
+  awk 'if($2 ~ /^[0-9]+$/ || NF != 2) { exit 1 }'
+  if [[ $? -gt 0 ]];
+    echo "chromsizes looks incorrect"
+    exit 1
+   fi
+fi
+
+if [[ $CHROMSIZES == *.fa* ]]; then
+    awk '{
+      if($0~">"){
+        if(length(chrom)!=0){
+          print chrom,clen
+        }
+        chrom=$1;
+        clen=0
+       } else{
+        clen+=length($0)
+       }
+      } END{
+        print chrom,clen
+    }' OFS='\t' $CHROMSIZES | tr -d '>' | sort -m -k1,1 > genome.chrom.sizes
+    CHROMSIZES="genome.chrom.sizes"
+fi
+
+
+
+
 if [ -z $NTHREADS ]; then
   NTHREADS=1
 fi
@@ -46,6 +115,7 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
+#check that dependencies are in PATH and correct versions
 #check if chromsizes or fasta specified with -g
 #check input files
 
@@ -117,7 +187,7 @@ for f in $FASTQFILES; do
   BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}.bam
   OUTPUT=${BASE}_q20_sort.bam
-  echo "samtools view -bq 20 $INPUT | samtools sort -T $OUTPUT - > ${OUTPUT}"
+  echo "samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD -T $OUTPUT - > ${OUTPUT}"
 done | parallel --will-cite -j $NTHREADS
 
 echo "calculating alignment statistics"
@@ -158,7 +228,7 @@ for f in $FASTQFILES; do
   BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
   INPUT=${BASE}_q20_sort_rmdup.bam
   OUTPUT=${BASE}_q20_sort_rmdup.bed
-  echo "bedtools bamtobed -i $INPUT | cut -f 1,2,3,4,5,6 | sort -T . -k1,1 -k2,2n > $OUTPUT"
+  echo "bedtools bamtobed -i $INPUT | cut -f 1,2,3,4,5,6 | sort -S $MEMPERTHREAD -T . -k1,1 -k2,2n > $OUTPUT"
 done | parallel --will-cite -j $NTHREADS
 
 
