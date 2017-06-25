@@ -53,4 +53,6 @@ samstats(){
   echo $OUTPUT
 }
 
+export -f samstats
+
 parallel --will-cite -k -j $NTHREADS "samstats {}" ::: $INPUT
