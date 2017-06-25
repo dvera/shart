@@ -41,7 +41,6 @@ INPUT=$@
 
 samstats(){
   INPUT=$1
-  
   # check if file exists
   if [[ ! -f $f ]]; then echo "file \"$f\" not found"; exit 1; fi
   # check input is a fastq
@@ -52,7 +51,6 @@ samstats(){
   
   samtools stats $INPUT > $OUTPUT
   echo $OUTPUT
-  done
 }
 
-parallel --will-cite -k -j $NTHREADS samstats : $INPUT
+parallel --will-cite -k -j $NTHREADS "samstats {}" ::: $INPUT
