@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) index|fasta" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+if [[ ! $# -eq 1 ]] ; then
+  echo 'only 1 argument can be specified'
+  exit 1
+fi
+
+INDEXFILE=$1
+
+index(){
+  INDEXFILE=$1
+  
+  if [[ -f ${INDEXFILE}.bwt ]]; then
+    INDEXPREFIX=$INDEXFILE
+  elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.tar.gz ]]; then
+    mkdir -p bwaIndex
+    INDEXPATH=$(readlink -f $INDEXFILE)
+    tar -C bwaIndex -x -f $INDEXPATH
+    INDEXPREFIX=$(readlink -f bwaIndex/*.bwt | sed 's/\.bwt$//g')
+  elif  [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.fa* ]]; then
+    >&2 echo "fasta defined for index, making bwa index from fasta"
+    mkdir -p bwaIndex
+    INDEXFILE=$(readlink -f $INDEXFILE)
+    (cd bwaIndex && bwa index -p genome $INDEXFILE)
+    INDEXPREFIX=$(readlink -f bwaIndex)/genome
+  else
+    >&2 echo "index not found"
+    exit 1
+  fi
+  echo $INDEXPREFIX
+ }
+
+index $INDEXFILE
