@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads ] sample1_R1.fq[,Sample2_R1.fastq,SampleN_R1.fastq] sample1_R2.fq[,Sample2_R2.fastq,SampleN_R2.fastq] " 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+while getopts ":t:" opt; do
+  case $opt in
+  t)
+    NTHREADS=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no fastq files specified'
+  exit 1
+fi
+
+  R1=$1
+  R2=$2
+  
+  R1=$(echo $R1 | tr ',' ' ')
+  R2=$(echo $R2 | tr ',' ' ')
+  
+interleave(){
+  R1=$1
+  R2=$2
+  if [[ $R1 == *.gz ]]; then CAT=zcat; else CAT=cat; fi
+  BASE="$(basename ${R1[i]} | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+  OUTPUT=${BASE}_interleaved.fastq
+  paste <($CAT $R1 | paste - - - -) <($CAT $R2 | paste - - - -) | tr '\t' '\n' > $OUTPUT
+  echo $OUTPUT
+}
+
+parallel --will-cite -k -j $NTHREADS interleave :: $R1 $R2
