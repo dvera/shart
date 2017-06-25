@@ -59,8 +59,6 @@ align(){
   INDEXFILE=$2
   NTHREADS=$3
   
-  for f in $INPUT; do
-   
    ISPAIRED=$(head -n 8 $INPUT | paste - - - - | awk '{print $1}' | uniq -c | awk '{print $1}' | head -n 1)
    if [[ $ISPAIRED -eq 2 ]]; then
      PAIRARG="-p"
@@ -71,15 +69,15 @@ align(){
    fi
    
    # check if file exists
-   if [[ ! -f $f ]]; then echo "fastq file \"$f\" not found"; exit 1; fi
+   if [[ ! -f $INPUT ]]; then echo "fastq file \"$INPUT\" not found"; exit 1; fi
    # check input is a fastq
-   if [[ $f != *.fastq ]] && [[ $f != *.fq ]]; then echo "input is not an uncompressed fastq"; exit 1; fi
+   if [[ $INPUT != *.fastq ]] && [[ $INPUT != *.fq ]]; then echo "input is not an uncompressed fastq"; exit 1; fi
    
-   BASE="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+   BASE="$(basename $INPUT | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
    OUTPUT=${BASE}.bam
    LOGFILE=${OUTPUT}.log
    
-   bwa mem $PAIRARG -v 2 -t $NTHREADS $INDEXFILE $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
+   bwa mem $PAIRARG -v 2 -t $NTHREADS $INDEXFILE $INPUT | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
    echo $OUTPUT
   done 
 }
