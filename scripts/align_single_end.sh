@@ -12,8 +12,17 @@ usage() {
 ### PARSE COMMAND LINE ARGS ####
 ################################
 
-while getopts ":i:t:g:" opt; do
+while getopts ":i:t:g:p" opt; do
   case $opt in
+  e)
+   EARLYBGS=$OPTARG
+   ;;
+  l)
+   LATEBGS=$OPTARG
+   ;;
+  p)
+   PAIRED=1
+   ;;
   t)
    NTHREADS=$OPTARG
    ;;
@@ -43,6 +52,8 @@ while getopts ":i:t:g:" opt; do
    ;;
   esac
 done
+
+shift $((OPTIND-1))
 
 if [[ -z $WINDOWSIZE ]]; then
   WINDOWSIZE=5000
@@ -101,14 +112,9 @@ if [[ $CHROMSIZES == *.fa* ]]; then
     CHROMSIZES="genome.chrom.sizes"
 fi
 
-
-
-
 if [ -z $NTHREADS ]; then
   NTHREADS=1
 fi
-
-shift $((OPTIND-1))
 
 if [[ $# -eq 0 ]] ; then
   echo 'no fastq files specified'
@@ -119,7 +125,20 @@ fi
 #check if chromsizes or fasta specified with -g
 #check input files
 
-echo "index is $INDEXFILE"
+if [[ -z $PAIRED ]]; then
+  #todo: make sure length of EARLYBGS and LATEBGS is even
+  #todo: check to see if read names in r1 and r2 are identical
+  ER1=$(echo $EARLYBGS | tr ',' '\n' | paste - - | cut -f 1)
+  ER2=$(echo $EARLYBGS | tr ',' '\n' | paste - - | cut -f 2)
+  LR1=$(echo $LATEBGS | tr ',' '\n' | paste - - | cut -f 1)
+  LR2=$(echo $LATEBGS | tr ',' '\n' | paste - - | cut -f 2)
+else
+  ER1=$(echo $EARLYBGS | tr ',' '\n')
+  LR1=$(echo $LATEBGS | tr ',' '\n')
+fi
+
+
+
 
 FASTQFILES=$@
 
@@ -150,7 +169,7 @@ fi
 ################################
 
 echo "clipping adapters from reads"
-for f in $FASTQFILES; do
+for f in $ER1 $LR1 $ER2 $LR2; do
  BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
  OUTPUT=${BASE}_clip.fastq
  LOGFILE=${OUTPUT}.log
@@ -162,13 +181,13 @@ done | parallel --will-cite -j $NTHREADS
 ################################
 
 # run bwa
-for f in $FASTQFILES; do
+for  in $FASTQFILES; do
   # create output prefix
   OUTPUT="$(basename $f | sed 's/\.fq$//g' | sed 's/\.fastq$//g').bam"
   # align fastq file and run samstats
   echo "bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT"
   bwa mem -v 2 -t $NTHREADS $INDEXPREFIX $f | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
-done
+done < 
 
 echo "calculating alignment statistics"
 for f in $FASTQFILES; do
