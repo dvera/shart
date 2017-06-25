@@ -56,4 +56,4 @@ clip(){
   done 
 }
 
-parallel --will-cite -k -j $NTHREADS clip : $INPUT
+parallel --will-cite -k -j $NTHREADS "clip {}" ::: $INPUT
