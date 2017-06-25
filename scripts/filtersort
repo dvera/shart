@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads ] fastq1 [fastq2 ... fastqN ]" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+while getopts ":t:" opt; do
+  case $opt in
+  t)
+    NTHREADS=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no fastq files specified'
+  exit 1
+fi
+
+INPUT=$@
+
+filtersort(){
+  INPUT=$1
+  MEMPERTHREAD=$2
+  
+  # check if file exists
+  if [[ ! -f $f ]]; then echo "fastq file \"$f\" not found"; exit 1; fi
+  # check input is a fastq
+  if [[ $f != *.fastq ]] || [[ $f != *.fq ]] || [[ $f != *.gz ]]; then echo "input is not a fastq"; exit 1; fi
+     
+  BASE="$(basename $f | sed 's/\.bam$//g')"
+  OUTPUT=${BASE}_q20_sort.bam
+  
+  samtools view -bq 20 $f | samtools sort -m $MEMPERTHREAD -T $OUTPUT - > ${OUTPUT}
+  echo $OUTPUT 
+}
+
+parallel --will-cite -k -j $NTHREADS "filtersort {} $MEMPERTHREAD" ::: $INPUT
