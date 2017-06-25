@@ -42,9 +42,9 @@ INPUT=$@
 samstats(){
   INPUT=$1
   # check if file exists
-  if [[ ! -f $f ]]; then >&2 echo "file \"$f\" not found"; exit 1; fi
+  if [[ ! -f $INPUT ]]; then >&2 echo "file \"$INPUT\" not found"; exit 1; fi
   # check input is a fastq
-  if [[ $f != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
+  if [[ $INPUT != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
   
   BASE="$(basename $INPUT)"
   OUTPUT=${BASE}.samstats
