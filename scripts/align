@@ -79,7 +79,7 @@ align(){
    
    bwa mem $PAIRARG -v 2 -t $NTHREADS $INDEXFILE $INPUT | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
    echo $OUTPUT
-  done 
+   
 }
 
 export -f align
