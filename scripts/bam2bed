@@ -68,4 +68,6 @@ bam2bed(){
   echo $OUTPUT
 }
 
+export -f bam2bed
+
 parallel --will-cite -k -j $NTHREADS "bam2bed {} $MEMPERTHREAD" ::: $INPUT
