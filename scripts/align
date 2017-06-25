@@ -85,4 +85,4 @@ align(){
 
 export -f align
 
-parallel --will-cite -k -j 1 align :: $INPUT $INDEXFILE
+parallel --will-cite -k -j 1 "align {} $INDEXFILE" ::: $INPUT
