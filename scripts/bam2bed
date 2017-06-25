@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads ] bam1 [bam2 ... bamN ]" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+while getopts ":t:" opt; do
+  case $opt in
+  t)
+    NTHREADS=$OPTARG
+   ;;
+  m)
+   MEMPERTHREAD=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no files given'
+  exit 1
+fi
+
+INPUT=$@
+
+bam2bed(){
+  INPUT=$1
+  MEMPERTHREAD=$2
+  # check if file exists
+  if [[ ! -f $f ]]; then echo "file \"$f\" not found"; exit 1; fi
+  
+  # check input is a fastq
+  if [[ $f != *.bam ]]; then echo "input is not a bam file"; exit 1; fi
+  
+  UCOUNT=$(samtools view $INPUT | cut -f 1 | head -n 1000 | sort | uniq | wc -l)
+  
+  if [[ UCOUNT -lt 1000 ]]; then
+    PAIRED=1
+  else
+    PAIRED=0
+  fi 
+  
+  BASE="$(basename $f | sed 's/\.bam$//g')"
+  OUTPUT=${BASE}.bed
+  
+  #if [[ $PAIRED -eq 1 ]]; then
+  bedtools bamtobed -i $INPUT | cut -f 1,2,3 | sort -S $MEMPERTHREAD -T . -k1,1 -k2,2n > $OUTPUT
+  
+  echo $OUTPUT
+}
+
+parallel --will-cite -k -j $NTHREADS "bam2bed {} $MEMPERTHREAD" ::: $INPUT
