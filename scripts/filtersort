@@ -58,4 +58,6 @@ filtersort(){
   echo $OUTPUT 
 }
 
+export -f filtersort
+
 parallel --will-cite -k -j $NTHREADS "filtersort {} $MEMPERTHREAD" ::: $INPUT
