@@ -77,7 +77,7 @@ align(){
    OUTPUT=${BASE}.bam
    LOGFILE=${OUTPUT}.log
    
-   bwa mem $PAIRARG -v 2 -t $NTHREADS $INDEXFILE $INPUT | samtools view -Shb - 2> ${OUTPUT}.log > $OUTPUT
+   bwa mem $PAIRARG -v 2 -t $NTHREADS $INDEXFILE $INPUT | samtools view -Shb - > $OUTPUT
    echo $OUTPUT
    
 }
