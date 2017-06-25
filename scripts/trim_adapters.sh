@@ -37,25 +37,23 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-# DEBUG
-
 FASTQFILES=$@
 
-# check if all files exist
-for f in $FASTQFILES; do
-  if [[ ! -f $f ]]; then
-    echo "fastq file \"$f\" not found"
-    exit 1
-  fi
-done
+clip(){
+  INPUT=$1
+  for f in $INPUT; do
+   # check if file exists
+   if [[ ! -f $f ]]; then echo "fastq file \"$f\" not found"; exit 1; fi
+   # check input is a fastq
+   if [[ $f != *.fastq ]] || [[ $f != *.fq ]] || [[ $f != *.gz ]]; then echo "input is not a fastq"; exit 1; fi
+   
+   BASE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')"
+   OUTPUT=${BASE}_clip.fastq
+   LOGFILE=${OUTPUT}.log
+   
+   cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o $OUTPUT $f > $LOGFILE
+   echo $OUTPUT
+  done 
+}
 
-
-for f in $FASTQFILES; do
- OUTFILE="$(basename $f | sed 's/\.gz$//g' | sed 's/\.fq$//g' | sed 's/\.fastq$//g')_clip.fastq"
- LOGFILE=${OUTFILE}.log
- echo "cutadapt -a AGATCGGAAGAGCACACGTCTG -q 0 -O 1 -m 0 -o $OUTFILE $f > $LOGFILE && fastqc -q $OUTFILE"
-done | parallel -j $NTHREADS
-
-
- 
- 
+parallel --will-cite -k -j $NTHREADS clip : $INPUT
