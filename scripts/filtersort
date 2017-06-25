@@ -54,7 +54,7 @@ filtersort(){
   BASE="$(basename $INPUT | sed 's/\.bam$//g')"
   OUTPUT=${BASE}_q20_sort.bam
   
-  samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD -T $OUTPUT - > $OUTPUT
+  samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD - > $OUTPUT
   >&2 echo "samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD -T $OUTPUT - > $OUTPUT"
   echo $OUTPUT 
 }
