@@ -1,0 +1,126 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
+  echo "" 1>&2
+  echo "  bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+################################
+### PARSE COMMAND LINE ARGS ####
+################################
+
+while getopts ":i:t:g:p" opt; do
+  case $opt in
+  e)
+   EARLYBGS=$OPTARG
+   ;;
+  l)
+   LATEBGS=$OPTARG
+   ;;
+  p)
+   PAIRED=1
+   ;;
+  t)
+   NTHREADS=$OPTARG
+   ;;
+  w)
+   WINDOWSIZE=$OPTARG
+   ;;
+  c)
+   CHROMSIZES=$OPTARG
+   ;;
+  i)
+   INDEXFILE=$OPTARG
+   ;;
+  m)
+   MEMPERTHREAD=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+if [[ -z $WINDOWSIZE ]]; then
+  WINDOWSIZE=5000
+fi
+
+if [[ -z $MEMPERTHREAD ]]; then
+  MEMPERTHREAD=5G
+fi
+
+if [[ -z $INDEXFILE ]]; then
+  echo "must define an fasta or bwa index with -i"
+fi
+
+if [[ -z $CHROMSIZES ]]; then
+  if [[ $INDEXFILE == *.fa* ]]; then
+    CHROMSIZES=$(fa2sizes $INDEXFILE)
+  else
+    echo "must define fasta as index if no chrom sizes file defined"
+    exit 1
+  fi
+else
+  awk 'if($2 ~ /^[0-9]+$/ || NF != 2) { exit 1 }'
+  if [[ $? -gt 0 ]];
+    echo "chromsizes looks incorrect"
+    exit 1
+   fi
+fi
+
+if [[ $CHROMSIZES == *.fa* ]]; then
+  CHROMSIZES=$(fa2sizes $CHROMSIZES)
+fi
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no fastq files specified'
+  exit 1
+fi
+
+#check that dependencies are in PATH and correct versions
+#check if chromsizes or fasta specified with -g
+#check input files
+
+if [[ -z $PAIRED ]]; then
+  #todo: make sure length of EARLYBGS and LATEBGS is even
+  #todo: check to see if read names in r1 and r2 are identical
+  ER1=$(echo $ER1 | tr ' ' ',')
+  ER2=$(echo $ER2 | tr ' ' ',')
+  LR1=$(echo $LR1 | tr ' ' ',')
+  LR2=$(echo $LR2 | tr ' ' ',')
+  E=$(interleave -t $NTHREADS $ER1 $ER2)
+  L=$(interleave -t $NTHREADS $LR1 $LR2)
+else
+  E=$(echo $EARLYBGS | tr ',' ' ')
+  L=$(echo $LATEBGS | tr ',' ' ')
+fi
+
+index=$(index $INDEXFILE)
+out=$(clip -t $NTHREADS $out)
+E=$(align -t $NTHREADS -i $index $E)
+L=$(align -t $NTHREADS -i $index $L)
+
+samstats -t $NTHREADS $E $L
+filtersort -t $NTHREADS $E $L
+samstats   -t $NTHREADS $E $L
+dedup -t $NTHREADS $E $L
+count -t $NTHREADS $E $L
