@@ -57,6 +57,7 @@ align(){
 
   INPUT=$1
   INDEXFILE=$2
+  NTHREADS=$3
   
   for f in $INPUT; do
    
@@ -85,4 +86,4 @@ align(){
 
 export -f align
 
-parallel --will-cite -k -j 1 "align {} $INDEXFILE" ::: $INPUT
+parallel --will-cite -k -j 1 "align {} $INDEXFILE $NTHREADS" ::: $INPUT
