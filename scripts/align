@@ -62,10 +62,10 @@ align(){
    ISPAIRED=$(head -n 8 $INPUT | paste - - - - | awk '{print $1}' | uniq -c | awk '{print $1}' | head -n 1)
    if [[ $ISPAIRED -eq 2 ]]; then
      PAIRARG="-p"
-     echo "fastq is interleaved, treating as paired-end"
+     >&2 echo "fastq is interleaved, treating as paired-end"
    else
      PAIRARG=""
-     echo "fastq is not interleaved, treating as single-end"
+     >&2 echo "fastq is not interleaved, treating as single-end"
    fi
    
    # check if file exists
