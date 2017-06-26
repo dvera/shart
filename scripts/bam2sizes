@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) file.bam" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+if [[ $# -eq 0 ]] ; then
+  >&2 echo 'error: no files given'
+  usage
+  exit 1
+fi
+
+INPUT=$1
+  
+# check if file exists
+if [[ ! -f $f ]]; then >&2 echo "file \"$f\" not found"; exit 1; fi
+  
+# check input is a bam
+if [[ $f != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
+
+samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | sort -k1,1 > genome.chrom.sizes
+
+echo $OUTPUT
