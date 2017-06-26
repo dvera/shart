@@ -49,4 +49,4 @@ if [[ $INPUT != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
 
 samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | sort -k1,1 | awk -v m=$MINSIZE '$2>m' OFS='\t' > genome.chrom.sizes
 
-echo $OUTPUT
+echo "genome.chrom.sizes"
