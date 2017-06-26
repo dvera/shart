@@ -45,7 +45,7 @@ fi
 INPUT=$@
 
 if [[ ! -f $REFERENCE ]]; then >&2 echo "file \"$REFERENCE\" not found"; exit 1; fi
-if [[ $REFERENCE != *.bg ]]; then >&2 echo "file \"$REFERENCE\" is not a bedGraph file"; exit 1; f
+if [[ $REFERENCE != *.bg ]]; then >&2 echo "file \"$REFERENCE\" is not a bedGraph file"; exit 1; fi
   
 for i in $INPUT; do
   if [[ ! -f $i ]]; then >&2 echo "file \"$i\" not found"; exit 1; fi
