@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] -e sample1_early.bg,[sample2_early.bg ... sampleN_early.bg ] -l sample1_late.bg,[sample2_late.bg ... sampleN_late.bg" 1>&2
+  echo "Usage: $(basename $0) [-t threads ] sample1_early.bg,[sample2_early.bg,sampleN_early.bg ] sample1_late.bg,[sample2_late.bg,sampleN_late.bg" 1>&2
   echo "" 1>&2
   exit 1
 }
@@ -10,12 +10,6 @@ while getopts ":t:" opt; do
   case $opt in
   t)
     NTHREADS=$OPTARG
-   ;;
-  e)
-    EBGS=$OPTARG
-   ;;
-  l)
-    LBGS=$OPTARG
    ;;
   \?)
    echo "Invalid option: -$OPTARG" >&2
@@ -38,16 +32,14 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ -z $EBGS ]] ; then
-  echo 'no early files given'
-  exit 1
-fi
-if [[ -z $LBGS ]] ; then
-  echo 'no late files given'
+if [[ $@ -lt 2 ]] ; then
+  echo 'no files given'
   exit 1
 fi
 
 #INPUT=$@
+EBGS=$1
+LBGS=$2
 
 l2r(){
   EBG=$1
