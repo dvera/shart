@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads ] -r reference.bg bedGraph1 [bedGraph2 bedGraphN ]" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+while getopts ":r:t:" opt; do
+  case $opt in
+ r)
+    REFERENCE=$OPTARG
+   ;;
+ t)
+    NUMTHREADS=$OPTARG
+   ;;
+ \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no files given'
+  >&2 echo ''
+  usage
+  exit 1
+fi
+
+INPUT=$@
+
+if [[ ! -f $REFERENCE ]]; then >&2 echo "file \"$REFERENCE\" not found"; exit 1; fi
+if [[ $REFERENCE != *.bg ]]; then >&2 echo "file \"$REFERENCE\" is not a bedGraph file"; exit 1; f
+  
+for i in $INPUT; do
+  if [[ ! -f $i ]]; then >&2 echo "file \"$i\" not found"; exit 1; fi
+  if [[ $i != *.bg ]]; then >&2 echo "file \"$i\" is not a bedGraph file"; exit 1; fi
+done
+
+normalize(){
+  BG=$1
+  RF=$2
+  
+  BASE="$(basename $BG | sed 's/\.bg$//g')"
+  OUTPUT="${BASE}_qnorm.bg"
+  BGLINES=$(cat $BG | wc -l)
+  RFLINES=$(cat $RF | wc -l)
+  TMPREFN="${BASE}_tmpRef.bg"
+  
+  if [[ $BGLINES -gt $RFLINES ]]; then
+    COPYNUM=$((1+BGLINES/RFLINES))
+    cat $(yes "$RF" | head -n $COPYNUM) > $TMPREFN
+    RF=$TMPREFN
+  fi
+  
+  paste <(sort -T . -k4,4g $BG) <(shuf -n $BGLINES $RF | sort -k4,4g) | \
+    cut -f 1,2,3,8 | sort -k1,1 -k2,2n > $OUTPUT
+  
+  rm -f $TMPREFN
+  
+  echo $OUTPUT
+}
+
+export -f normalize
+
+parallel --will-cite -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
