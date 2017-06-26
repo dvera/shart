@@ -52,16 +52,16 @@ count(){
   WINDOWBED=$2
   
   # check if file exists
-  if [[ ! -f $f ]]; then echo "file \"$f\" not found"; exit 1; fi
+  if [[ ! -f $INPUT ]]; then echo "file \"$INPUT\" not found"; exit 1; fi
   if [[ ! -f $WINDOWBED ]]; then echo "file \"$WINDOWBED\" not found"; exit 1; fi
   
   # check input is a bed
-  if [[ $f != *.bed ]]; then echo "input is not a bed file"; exit 1; fi
+  if [[ $INPUT != *.bed ]]; then echo "input is not a bed file"; exit 1; fi
   if [[ $WINDOWBED != *.bed ]]; then echo "window file is not a bed file"; exit 1; fi
   
-  BASE="$(basename $f | sed 's/\.bed$//g')"
+  BASE="$(basename $INPUT | sed 's/\.bed$//g')"
   WBASE="$(basename $WINDOWBED | sed 's/\.bed//g')"
-  OUTPUT=${BASE}_w${WBASE}.bg
+  OUTPUT=${BASE}_${WBASE}.bg
   
   bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | awk '{print $1,$2,$3,$4 }' OFS='\t' > $OUTPUT
   
