@@ -63,7 +63,10 @@ count(){
   WBASE="$(basename $WINDOWBED | sed 's/\.bed//g')"
   OUTPUT=${BASE}_${WBASE}.bg
   
-  bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | awk '{print $1,$2,$3,$4 }' OFS='\t' > $OUTPUT
+  SCALE=$(echo "1000000/$(cat $INPUT | wc -l)" | bc -l)
+  
+  bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | \
+  awk -v s=$SCALE '{print $1,$2,$3,$4*1000*(s/$3-$2) }' OFS='\t' > $OUTPUT
   
   echo $OUTPUT
 }
