@@ -13,6 +13,7 @@ while getopts ":t:w:" opt; do
    ;;
   w)
     WINDOWBED=$OPTARG
+   ;;
   \?)
    echo "Invalid option: -$OPTARG" >&2
    usage
