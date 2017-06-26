@@ -29,9 +29,6 @@ while getopts ":i:t:g:p" opt; do
   w)
    WINDOWSIZE=$OPTARG
    ;;
-  c)
-   CHROMSIZES=$OPTARG
-   ;;
   i)
    INDEXFILE=$OPTARG
    ;;
@@ -72,25 +69,6 @@ if [[ -z $INDEXFILE ]]; then
   echo "must define an fasta or bwa index with -i"
 fi
 
-if [[ -z $CHROMSIZES ]]; then
-  if [[ $INDEXFILE == *.fa* ]]; then
-    CHROMSIZES=$(fa2sizes $INDEXFILE)
-  else
-    echo "must define fasta as index if no chrom sizes file defined"
-    exit 1
-  fi
-else
-  awk 'if($2 ~ /^[0-9]+$/ || NF != 2) { exit 1 }'
-  if [[ $? -gt 0 ]];
-    echo "chromsizes looks incorrect"
-    exit 1
-   fi
-fi
-
-if [[ $CHROMSIZES == *.fa* ]]; then
-  CHROMSIZES=$(fa2sizes $CHROMSIZES)
-fi
-
 if [[ $# -eq 0 ]] ; then
   echo 'no fastq files specified'
   exit 1
@@ -114,13 +92,14 @@ else
   L=$(echo $LATEBGS | tr ',' ' ')
 fi
 
+rfq="$E $L"
 index=$(index $INDEXFILE)
-out=$(clip -t $NTHREADS $out)
-E=$(align -t $NTHREADS -i $index $E)
-L=$(align -t $NTHREADS -i $index $L)
-
+cfq=$(clip -t $NTHREADS $rfq)
+bam=$(align -t $NTHREADS -i $index $cfq)
 samstats -t $NTHREADS $E $L
-filtersort -t $NTHREADS $E $L
+sbam=$(filtersort -t $NTHREADS $bam)
 samstats   -t $NTHREADS $E $L
-dedup -t $NTHREADS $E $L
-count -t $NTHREADS $E $L
+rbam=$(dedup -t $NTHREADS $sbam)
+bed=$(bam2bed -t $NTHREADS $rbam)
+bg=$(count -t $NTHREADS $bed)
+
