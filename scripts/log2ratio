@@ -73,7 +73,7 @@ export -f l2r
 EBGS=$(echo $EBGS | tr ',' ' ')
 LBGS=$(echo $LBGS | tr ',' ' ')
 
-parallel --will-cite -k -j $NTHREADS "l2r {}" ::: $INPUT
+parallel --will-cite -k -j $NTHREADS l2r ::: $EBGS ::: $LBGS
 
 
 # BGLINES=$(wc -l $EARLYBG | cut -d" " -f 1)
