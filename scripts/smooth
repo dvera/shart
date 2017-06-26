@@ -64,5 +64,5 @@ bgfiles <- args[3:length(args)]
 		gc()
 	}, mc.cores=threads, mc.preschedule=FALSE)
 
-	return(outnames)
-}
+cat(paste(outnames,collapse="\n"))
+
