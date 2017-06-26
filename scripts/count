@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] fastq1 [fastq2 ... fastqN ]" 1>&2
+  echo "Usage: $(basename $0) [-t threads ] -w windows.bed bed1 [bed2 ... bedN ]" 1>&2
   echo "" 1>&2
   exit 1
 }
 
-while getopts ":t:" opt; do
+while getopts ":t:w:" opt; do
   case $opt in
   t)
     NTHREADS=$OPTARG
@@ -44,7 +44,6 @@ if [[ -z $WINDOWBED ]] ; then
   exit 1
 fi
 
-
 INPUT=$@
 
 dedup(){
@@ -67,6 +66,8 @@ dedup(){
   
   echo $OUTPUT
 }
+
+export -f dedup
 
 parallel --will-cite -k -j $NTHREADS "count {} $WINDOWBED" ::: $INPUT
 
