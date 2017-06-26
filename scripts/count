@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] -w windows.bed bed1 [bed2 ... bedN ]" 1>&2
-  echo "" 1>&2
+  >&2 echo "Usage: $(basename $0) [-t threads ] -w windows.bed bed1 [bed2 ... bedN ]"
+  >&2 echo ""
   exit 1
 }
 
@@ -15,15 +15,15 @@ while getopts ":t:w:" opt; do
     WINDOWBED=$OPTARG
    ;;
   \?)
-   echo "Invalid option: -$OPTARG" >&2
+   >&2 echo "Invalid option: -$OPTARG"
    usage
    ;;
   [?])
    usage
    ;;
   :)
-   echo "Option -$OPTARG requires an argument." >&2
-   echo "" >&2
+   >&2 echo "Option -$OPTARG requires an argument."
+   >&2 echo ""
    usage
    ;;
   esac
@@ -36,12 +36,12 @@ fi
 shift $((OPTIND-1))
 
 if [[ $# -eq 0 ]] ; then
-  echo 'no files given'
+  >&2 echo 'no files given'
   exit 1
 fi
 
 if [[ -z $WINDOWBED ]] ; then
-  echo 'window bed not provided'
+  >&2 echo 'window bed not provided'
   exit 1
 fi
 
@@ -52,12 +52,12 @@ count(){
   WINDOWBED=$2
   
   # check if file exists
-  if [[ ! -f $INPUT ]]; then echo "file \"$INPUT\" not found"; exit 1; fi
-  if [[ ! -f $WINDOWBED ]]; then echo "file \"$WINDOWBED\" not found"; exit 1; fi
+  if [[ ! -f $INPUT ]]; then >&2 echo "file \"$INPUT\" not found"; exit 1; fi
+  if [[ ! -f $WINDOWBED ]]; then >&2 echo "file \"$WINDOWBED\" not found"; exit 1; fi
   
   # check input is a bed
-  if [[ $INPUT != *.bed ]]; then echo "input is not a bed file"; exit 1; fi
-  if [[ $WINDOWBED != *.bed ]]; then echo "window file is not a bed file"; exit 1; fi
+  if [[ $INPUT != *.bed ]]; then >&2 echo "input is not a bed file"; exit 1; fi
+  if [[ $WINDOWBED != *.bed ]]; then >&2 echo "window file is not a bed file"; exit 1; fi
   
   BASE="$(basename $INPUT | sed 's/\.bed$//g')"
   WBASE="$(basename $WINDOWBED | sed 's/\.bed//g')"
