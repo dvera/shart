@@ -1,14 +1,41 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) file.bam" 1>&2
+  echo "Usage: $(basename $0) [-m minimumChromSize] file.bam" 1>&2
   echo "" 1>&2
   exit 1
 }
 
+
+while getopts ":t:" opt; do
+  case $opt in
+  m)
+    MINSIZE=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+
+if [ -z $MINSIZE ]; then
+  MINSIZE=10000000
+fi
+
 if [[ $# -eq 0 ]] ; then
-  >&2 echo 'error: no files given'
-  usage
+  echo 'bam file required'
   exit 1
 fi
 
@@ -20,6 +47,6 @@ if [[ ! -f $INPUT ]]; then >&2 echo "file \"$f\" not found"; exit 1; fi
 # check input is a bam
 if [[ $INPUT != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
 
-samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | sort -k1,1 > genome.chrom.sizes
+samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | sort -k1,1 | awk -v m=$MINSIZE '$2>m' OFS='\t' > genome.chrom.sizes
 
 echo $OUTPUT
