@@ -75,7 +75,6 @@ export -f count
 
 parallel --will-cite -k -j $NTHREADS "count {} $WINDOWBED" ::: $INPUT
 
-}
 
 
 
