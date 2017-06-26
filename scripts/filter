@@ -55,7 +55,7 @@ for i in $INPUT; do
 done
 
 paste $INPUT | awk -v minrpkm=$MINRPKM \
-  '{for(i=4;i<=NF;i+=4){scoresum+=$i}; if((scoresum/NF/4)>=minrpkm){print $1,$2,$3}}' \
+  '{for(i=4;i<=NF;i+=4){scoresum+=$i}; if((scoresum/NF/4)>=minrpkm){print $1,$2,$3};scoresum=0}' \
 OFS='\t' > filtered.bed
 
 intersect(){
