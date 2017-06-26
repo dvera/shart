@@ -44,6 +44,6 @@ if [[ ! -f $INPUT ]]; then >&2 echo "file \"$INPUT\" not found"; exit 1; fi
 
 OUTPUT="w${WINDOWSIZE}.bed"
 
-bedtools makewindows -w $WINSIZE > $OUTPUT
+bedtools makewindows -w $WINSIZE -g $INPUT > $OUTPUT
 
 echo $OUTPUT
