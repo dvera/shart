@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] -w windows.bed bed1 [bed2 ... bedN ]" 1>&2
+  echo "Usage: $(basename $0) [-t threads ] bedGraph1 [bedGraph2 bedGraphN ]" 1>&2
   echo "" 1>&2
   exit 1
 }
@@ -46,12 +46,6 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-if [[ -z $WINDOWBED ]] ; then
-  >&2 echo 'window bed not provided'
-  >&2 echo ''
-  usage
-  exit 1
-fi
 
 INPUT=$@
 
