@@ -88,9 +88,11 @@ if [[ -z $PAIRED ]]; then
   E=$(interleave -t $NTHREADS $ER1 $ER2)
   L=$(interleave -t $NTHREADS $LR1 $LR2)
 else
-  E=$(echo $EARLYBGS | tr ',' ' ')
-  L=$(echo $LATEBGS | tr ',' ' ')
+  E=$(echo $ER1 | tr ',' ' ')
+  L=$(echo $LR1 | tr ',' ' ')
 fi
+
+NUMSAMPLES=$(echo $E | wc -w)
 
 rfq="$E $L"
 index=$(index $INDEXFILE)
@@ -102,4 +104,11 @@ samstats   -t $NTHREADS $E $L
 rbam=$(dedup -t $NTHREADS $sbam)
 bed=$(bam2bed -t $NTHREADS $rbam)
 bg=$(count -t $NTHREADS $bed)
+
+ebg=$(echo $bg | tr ' ' '\n' | head -n $NUMSAMPLES)
+lbg=$(echo $bg | tr ' ' '\n' | tail -n $NUMSAMPLES)
+
+
+
+
 
