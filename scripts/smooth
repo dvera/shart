@@ -10,7 +10,7 @@ removeext <- function( filenames ){
 	filenames
 }
 
-usage <- cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")
+usage <- function(){cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")}
 args = commandArgs(trailingOnly=TRUE)
 if(length(args)<3){usage();stop("see usage")}
 lspan <- as.numeric(args[1])
