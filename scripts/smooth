@@ -1,8 +1,5 @@
 #!/usr/bin/env Rscript
 
-args = commandArgs(trailingOnly=TRUE)
-lspan <- as.numeric(args[1])
-bgfiles <- args[2:length(args)]
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
@@ -13,39 +10,44 @@ removeext <- function( filenames ){
 	filenames
 }
 
+usage <- cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")
+args = commandArgs(trailingOnly=TRUE)
+if(length(args)<3){usage();stop("see usage")}
+lspan <- as.numeric(args[1])
+threads <- as.numeric(args[2])
+bgfiles <- args[3:length(args)]
+
 	options(scipen=9999)
-	# assumes sorted bg
-	if(lspan<1){
+	
+  if(lspan<1){
 		stop("lspan must indicate distance in bp")
 	}
+	
 	bgnames <- basename(removeext(bgfiles))
 	numbgs <- length(bgfiles)
 	outnames <- paste(bgnames,"_loess",lspan,".bg",sep="")
 	
-	#dump <- mclapply(seq_len(numbgs), function(x){
-	dump <- lapply(seq_len(numbgs), function(x){
+	dump <- mclapply(seq_len(numbgs), function(x){
 		curbg <- as.data.frame( read.table ( bgfiles[x], header=FALSE, stringsAsFactors=FALSE ) )
-		
 		chroms    <- unique(curbg[,1])
 		numchroms <- length(chroms)
-		windowsize <- median(curbg[,3]-curbg[,2])
 		all=split(curbg,curbg[,1])
 		
-		#lscores<-mclapply(1:numchroms,function(i){
 		lscores<-lapply(1:numchroms,function(i){
 			
 			cur <- all[[i]]
-			chromlspan <- lspan/sum(cur[,3]-cur[,2])
+		  curchrom <- cur[1,1]
+			chromlspan <- lspan/(max(cur[,3])-min(cur[,2]))
 			
 			cura <- as.data.frame(lapply(4:ncol(cur), function(k){
 				cur[,k] <- tryCatch({
-						loess(cur[,k]~cur[,2],span=chromlspan)$fitted
+						predict(loess(cur[,k]~cur[,2],span=chromlspan),cur[,2])
 					},warning = function(war){
-						print(paste("warning for file",bgnames[x],"chromosome",cur[1,1],":",war))
-						out <- loess(cur[,k]~cur[,2],span=chromlspan)$fitted
+						warning(paste(bgnames[x],"chromosome",cur[1,1],":",war))
+						out <- predict(loess(cur[,k]~cur[,2],span=chromlspan),cur[,2])
 						return(out)
 					},error = function(err){
-						print(paste("smoothing failed for file",bgnames[x],"chromosome",cur[1,1],":",err))
+						warning(paste("smoothing failed for file",bgnames[x],"chromosome",cur[1,1],":",err))
 						return(cur[,k])
 					}
 				)
@@ -56,8 +58,10 @@ removeext <- function( filenames ){
 			return(cura)
 		})
 		smoothbg<-do.call(rbind,lscores)
-		write.table(smoothbg,file=outnames[x],col.names=FALSE,quote=FALSE, sep="\t", row.names=F)
+		write.table(smoothbg,file=outnames[x],col.names=FALSE,quote=FALSE, sep="\t", row.names=FALSE)
 		rm(curbg)
 		gc()
-	})
-	
+	}, mc.cores=threads, mc.preschedule=FALSE)
+
+	return(outnames)
+}
