@@ -65,7 +65,7 @@ intersect(){
   BASE="$(basename $BG | sed 's/\.bg$//g')"
   OUTPUT="${BASE}_filtered.bg"
   
-  bedtools intersect -sorted -u -b $BG -a $FW > $OUTPUT
+  bedtools intersect -sorted -u -a $BG -b $FW > $OUTPUT
   
   echo $OUTPUT
 }
