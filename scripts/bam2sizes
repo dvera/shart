@@ -15,10 +15,10 @@ fi
 INPUT=$1
   
 # check if file exists
-if [[ ! -f $f ]]; then >&2 echo "file \"$f\" not found"; exit 1; fi
+if [[ ! -f $INPUT ]]; then >&2 echo "file \"$f\" not found"; exit 1; fi
   
 # check input is a bam
-if [[ $f != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
+if [[ $INPUT != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
 
 samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | sort -k1,1 > genome.chrom.sizes
 
