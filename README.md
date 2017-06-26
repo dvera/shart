@@ -4,13 +4,13 @@ This repo contains the source files for a docker image stored in the docker hub 
 
 ## what
 
-This repository contains a dockerfile and scripts in order to execute generate replication timing profiles from a set of raw reads from sequencing of either early- and late-replicating DNA, or from DNA extracted from cells sorted in S or G1 phase.
+This repository contains a dockerfile and scripts in order to execute generate replication timing profiles from a set of raw reads from sequencing of either early- and late-replicating DNA, or from DNA extracted from cells sorted for S or G1 DNA content.
 
-Sample data files that can be used for testing the tools are included in the `sample_data` folder. These data are not included in the docker image.
+Sample data files that can be used for testing the tools are included in the `sample_data` folder.
 
 The scripts for executing the pipeline are under the `scripts` directory and follow naming conventions `run_xx.sh`. These wrappers are copied to the docker image at build time and may be used as a single step in a workflow.
 
-The docker container for executing these scripts can be built yourself or pulled from docker hub (vera/docker-4dn-repliseq).
+A docker image for executing these scripts can be built yourself or pulled from docker hub (vera/docker-4dn-repliseq). Images built with the dockerfile will contain both the scripts and sample data for running/testing the pipeline.
 
 ## how
 
@@ -22,48 +22,68 @@ docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq <name_of_scr
 
 ### automated pipeline execution starting with fastq files
 ```bash
-# make replication timing profiles from early and late fastq files using 5000-bp window sizes and 12 threads
-docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq make_rt.sh \
+# make smoothed and normalized replication timing profiles from early and late fastq files using 5000-bp window sizes and 12 threads
+docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq repliseq  \
   genome.fa 5000 12 sample1_early.fastq,sample2_early.fastq sample1_late.fastq,sample2_late.fastq
 ```
 
 ### step-by-step workflow
 ```bash
-# create and enter a container inside the directory with your data
-docker run -it -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
+# pull the pre-built image, create and enter a container inside the directory with your data
+docker run --rm -it -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
 
-# initial QC
-fastqc.sh INPUT
+# define early and late fastq files, here using sample data
+E=$(ls /opt/docker-4dn-repliseq/sample_data/*early*.fastq.gz)
+L=$(ls /opt/docker-4dn-repliseq/sample_data/*late*.fastq.gz)
+NUMSAMPLES=$(echo $E | wc -w)
+rfq="$E $L"
+NTHREADS=4
 
-# clip and reqc
-trim_adapters.sh INPUT
+# download hg38 and make bwa index
+wget -qO- http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz | gunzip -c > hg38.fa
+index=$(index hg38.fa)
 
-# align, sort, get stats
-align_single_end.sh INDEX NTHREADS INPUT
+# clip adapters from reads
+cfq=$(clip -t $NTHREADS $rfq)
 
-# remove duplicates and get stats
-remove_duplicates.sh INPUT
+# align reads to genome
+bam=$(align -t $NTHREADS -i $index $cfq)
+bstat=$(samstats -t $NTHREADS $bam)
 
-# make windows
-make_windows.sh CHROMSIZESFILE WINDOWSIZE
+# filter bams by alignment quality and sort by position
+sbam=$(filtersort -t $NTHREADS $bam)
+fbstat=$(samstats -t $NTHREADS $sbam)
 
-# calcaulte coverage
-window_density.sh WINDOWSFILE INPUT
+# remove duplicate reads
+rbam=$(dedup -t $NTHREADS $sbam)
 
-# filter a defined set of bedgraph files
-filter_windows.R *_[EL]_*_w5000.bg
+# convert bams to beds
+bed=$(bam2bed -t $NTHREADS $rbam)
 
-# calculate log2 ratios
-calc_log2ratio.sh EARLYBG LATEBG
+# make chromsizes file from bam header
+sizes=$(bam2sizes $bam)
 
-# create a reference distribution from multiple files
-make_average_distribution.sh PREFIX BG1 BG2 BGn
+# break genome into 5-kb windows
+win=$(window $sizes)
 
-# quantile normalize
-quantile_normalize.sh INPUT REFERENCE
+# calculate RPKM bedGraphs for each set of alignments
+bg=$(count -w $win -t $NTHREADS $bed)
 
-# loess smooth profiles
-loess_smooth.R SPANSIZE BG1 BG2 BGn
+# filter windows with a low average RPKM
+fbg=$(filter -t $NTHREADS $bg)
+
+# define early and late bedGraphs
+ebg=$(echo $fbg | tr ' ' '\n' | head -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
+lbg=$(echo $fbg | tr ' ' '\n' | tail -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
+
+# calculate log2 ratios between early and late
+l2r=$(log2ratio $ebg $lbg)
+
+# quantile-normalize replication timing profiles to the example reference bedGraph
+l2rn=$(normalize -r /opt/docker-4dn-repliseq/sample_data/reference.bg $l2r)
+
+# loess-smooth profiles using a 300kb span size
+l2rs=$(smooth 300000 $NTHREADS $l2rn)
 ```
 
 

@@ -1,10 +1,11 @@
 FROM ubuntu:xenial
 
-ENV PATH=/opt/FastQC:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/opt/docker-4dn-repliseq/scripts:/opt/FastQC:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y \
+  git\
   gcc \
   g++ \
   wget \
@@ -58,4 +59,6 @@ RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' &&
  R -e 'devtools::install_github("dvera/gyro")' && \
  R -e 'devtools::install_github("dvera/travis")'
  
-ENTRYPOINT bash
+RUN git clone https://github.com/dvera/docker-4dn-repliseq /opt/docker-4dn-repliseq
+
+CMD bash

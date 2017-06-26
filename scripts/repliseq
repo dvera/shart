@@ -1,10 +1,15 @@
 #!/bin/bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
-  echo "" 1>&2
-  echo "  bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
-  echo "" 1>&2
+  >&2 echo "Usage (single-end): $(basename $0) [-t threads] -i bwaIndex"
+  >&2 echo "  sample1_early.fastq[,sample2_early.fastq,sampleN_early.fastq   sample1_late.fastq[,sample2_late.fastq,sampleN_late.fastq]"
+  >&2 echo ""
+  >&2 echo ""
+  >&2 echo "Usage (single-end): $(basename $0) [-t threads] -i bwaIndex"
+  >&2 echo "  sample1_early_R1.fq,sample1_early_R2.fq[,sampleN_early_R1.fq,sampleN_early_R2.fq]  sample1_late_R1.fq,sample1_late_R2.fq[,sampleN_late_R1.fq,sampleN_late_R2.fq]"
+  >&2 echo ""
+  >&2 echo "bwaIndex (-i) can be a path to a bwa index prefix or a tarball of an bwa index"
+  >&2 echo ""
   exit 1
 }
 
@@ -12,14 +17,8 @@ usage() {
 ### PARSE COMMAND LINE ARGS ####
 ################################
 
-while getopts ":i:t:g:p" opt; do
+while getopts ":i:t:m:w:r:p" opt; do
   case $opt in
-  e)
-   EARLYBGS=$OPTARG
-   ;;
-  l)
-   LATEBGS=$OPTARG
-   ;;
   p)
    PAIRED=1
    ;;
@@ -34,6 +33,9 @@ while getopts ":i:t:g:p" opt; do
    ;;
   m)
    MEMPERTHREAD=$OPTARG
+   ;;
+  r)
+   REFERENCE=$OPTARG
    ;;
   \?)
    echo "Invalid option: -$OPTARG" >&2
@@ -52,7 +54,6 @@ done
 
 shift $((OPTIND-1))
 
-
 if [ -z $NTHREADS ]; then
   NTHREADS=1
 fi
@@ -65,14 +66,21 @@ if [[ -z $MEMPERTHREAD ]]; then
   MEMPERTHREAD=5G
 fi
 
-if [[ -z $INDEXFILE ]]; then
-  echo "must define an fasta or bwa index with -i"
+if [[ -z $REFERENCE ]]; then
+  >&2 echo "must define a normalization reference"
 fi
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no fastq files specified'
+if [[ -z $INDEXFILE ]]; then
+  >&2 echo "must define an fasta or bwa index with -i"
+fi
+
+if [[ $# -lt 2 ]] ; then
+  >&2 echo 'no fastq files specified'
   exit 1
 fi
+
+EF=$1
+LF=$2
 
 #check that dependencies are in PATH and correct versions
 #check if chromsizes or fasta specified with -g
@@ -81,15 +89,21 @@ fi
 if [[ -z $PAIRED ]]; then
   #todo: make sure length of EARLYBGS and LATEBGS is even
   #todo: check to see if read names in r1 and r2 are identical
-  ER1=$(echo $ER1 | tr ' ' ',')
-  ER2=$(echo $ER2 | tr ' ' ',')
-  LR1=$(echo $LR1 | tr ' ' ',')
-  LR2=$(echo $LR2 | tr ' ' ',')
+  ER1=$(echo $EF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+  ER2=$(echo $EF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+  LR1=$(echo $LF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+  LR2=$(echo $LF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+  
+#   ER1=$(echo $ER1 | tr ' ' ',')
+#   ER2=$(echo $ER2 | tr ' ' ',')
+#   LR1=$(echo $LR1 | tr ' ' ',')
+#   LR2=$(echo $LR2 | tr ' ' ',')
+
   E=$(interleave -t $NTHREADS $ER1 $ER2)
   L=$(interleave -t $NTHREADS $LR1 $LR2)
 else
-  E=$(echo $ER1 | tr ',' ' ')
-  L=$(echo $LR1 | tr ',' ' ')
+  E=$(echo $EF | tr ',' ' ')
+  L=$(echo $LF | tr ',' ' ')
 fi
 
 NUMSAMPLES=$(echo $E | wc -w)
@@ -98,18 +112,21 @@ rfq="$E $L"
 index=$(index $INDEXFILE)
 cfq=$(clip -t $NTHREADS $rfq)
 bam=$(align -t $NTHREADS -i $index $cfq)
-samstats -t $NTHREADS $E $L
+bstat=$(samstats -t $NTHREADS $bam)
 sbam=$(filtersort -t $NTHREADS $bam)
-samstats   -t $NTHREADS $E $L
+fbstat=$(samstats -t $NTHREADS $sbam)
 rbam=$(dedup -t $NTHREADS $sbam)
 bed=$(bam2bed -t $NTHREADS $rbam)
-bg=$(count -t $NTHREADS $bed)
+sizes=$(bam2sizes $bam)
+win=$(window $sizes)
+bg=$(count -w $win -t $NTHREADS $bed)
 fbg=$(filter -t $NTHREADS $bg)
 
 ebg=$(echo $fbg | tr ' ' '\n' | head -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
 lbg=$(echo $fbg | tr ' ' '\n' | tail -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
 
-log2ratio $ebg $lbg
-
+l2r=$(log2ratio $ebg $lbg)
+l2rn=$(normalize -r $REFERENCE $l2r)
+l2rs=$(smooth $l2rn)
 
 
