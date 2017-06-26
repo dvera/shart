@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+require(parallel,quietly=T)
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
