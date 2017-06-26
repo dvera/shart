@@ -32,7 +32,7 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $@ -lt 2 ]] ; then
+if [[ $# -lt 2 ]] ; then
   echo 'no files given'
   exit 1
 fi
@@ -55,7 +55,7 @@ l2r(){
   OUTPUT="$(basename $EBG | sed 's/\.bg$/_l2r\.bg/g')"
   LOGFILE=${OUTPUT}.log
   
-  paste $EBG $LBG | awk '{print $1,$2,$3,log(($4+1)/($8+1))/log(2)} }' OFS='\t' > $OUTPUT
+  paste $EBG $LBG | awk '{print $1,$2,$3,log(($4+1)/($8+1))/log(2)}' OFS='\t' > $OUTPUT
   
   echo $OUTPUT
 }
