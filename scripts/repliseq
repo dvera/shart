@@ -104,11 +104,12 @@ samstats   -t $NTHREADS $E $L
 rbam=$(dedup -t $NTHREADS $sbam)
 bed=$(bam2bed -t $NTHREADS $rbam)
 bg=$(count -t $NTHREADS $bed)
+fbg=$(filter -t $NTHREADS $bg)
 
-ebg=$(echo $bg | tr ' ' '\n' | head -n $NUMSAMPLES)
-lbg=$(echo $bg | tr ' ' '\n' | tail -n $NUMSAMPLES)
+ebg=$(echo $fbg | tr ' ' '\n' | head -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
+lbg=$(echo $fbg | tr ' ' '\n' | tail -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
 
-
+log2ratio $ebg $lbg
 
 
 
