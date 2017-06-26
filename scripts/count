@@ -47,7 +47,7 @@ fi
 
 INPUT=$@
 
-dedup(){
+count(){
   INPUT=$1
   WINDOWBED=$2
   
@@ -68,7 +68,7 @@ dedup(){
   echo $OUTPUT
 }
 
-export -f dedup
+export -f count
 
 parallel --will-cite -k -j $NTHREADS "count {} $WINDOWBED" ::: $INPUT
 
