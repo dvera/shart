@@ -79,3 +79,4 @@ normalize(){
 export -f normalize
 
 parallel --will-cite -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
+
