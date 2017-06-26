@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: $(basename $0) [-t threads ] -w windows.bed bed1 [bed2 ... bedN ]" 1>&2
+  echo "" 1>&2
+  exit 1
+}
+
+while getopts ":m:t:" opt; do
+  case $opt in
+  t)
+    NUMTHREADS=$OPTARG
+   ;;
+  m)
+    MINRPKM=$OPTARG
+   ;;
+  \?)
+   echo "Invalid option: -$OPTARG" >&2
+   usage
+   ;;
+  [?])
+   usage
+   ;;
+  :)
+   echo "Option -$OPTARG requires an argument." >&2
+   echo "" >&2
+   usage
+   ;;
+  esac
+done
+
+if [ -z $NTHREADS ]; then
+  NTHREADS=1
+fi
+
+if [ -z $MINRPKM ]; then
+  MINRPKM=0.1
+fi
+
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]] ; then
+  echo 'no files given'
+  >&2 echo ''
+  usage
+  exit 1
+fi
+
+if [[ -z $WINDOWBED ]] ; then
+  >&2 echo 'window bed not provided'
+  >&2 echo ''
+  usage
+  exit 1
+fi
+
+INPUT=$@
+
+for i in $INPUT; do
+  if [[ ! -f $i ]]; then >&2 echo "file \"$i\" not found"; exit 1; fi
+  if [[ $i != *.bg ]]; then >&2 echo "file \"$i\" is not a bedGraph file"; exit 1; fi
+done
+
+paste $INPUT | awk -v minrpkm=$MINRPKM \
+  '{for(i=4;i<=NF;i+=4){scoresum+=$i}; if((scoresum/NF/4)>=minrpkm){print $1,$2,$3}}' \
+OFS='\t' > filtered.bed
+
+intersect(){
+  BG=$1
+  FW=$2
+  
+  BASE="$(basename $BG | sed 's/\.bg$//g')"
+  OUTPUT="${BASE}_filtered.bg"
+  
+  bedtools intersect -sorted -u -b $BG -a $FW > $OUTPUT
+  
+  echo $OUTPUT
+}
+
+export -f intersect
+
+parallel --will-cite -k -j $NTHREADS "intersect {} filtered.bed" ::: $INPUT
