@@ -26,11 +26,16 @@ while getopts ":t:" opt; do
   esac
 done
 
-if [ -z $NTHREADS ]; then
-  NTHREADS=1
-fi
 
 shift $((OPTIND-1))
+
+if [ -z $NTHREADS ]; then
+  if [ -z $NUMTHREADS ]; then
+    NTHREADS=1
+  else
+    NTHREADS=$NUMTHREADS
+  fi
+fi
 
 if [[ $# -eq 0 ]] ; then
   echo 'no bam files specified'
