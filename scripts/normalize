@@ -30,7 +30,11 @@ while getopts ":r:t:" opt; do
 done
 
 if [ -z $NTHREADS ]; then
-  NTHREADS=1
+  if [ -z $NUMTHREADS ]; then
+    NTHREADS=1
+  else
+    NTHREADS=$NUMTHREADS
+  fi
 fi
 
 shift $((OPTIND-1))
