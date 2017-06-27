@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] bedGraph1 [bedGraph2 bedGraphN ]" 1>&2
+  echo "Usage: $(basename $0) [-m minRPKM -t threads ] bedGraph1 [bedGraph2 bedGraphN ]" 1>&2
   echo "" 1>&2
   exit 1
 }
@@ -43,15 +43,11 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no files given'
-  >&2 echo ''
-  usage
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
-
-
-INPUT=$@
 
 for i in $INPUT; do
   if [[ ! -f $i ]]; then >&2 echo "file \"$i\" not found"; exit 1; fi
