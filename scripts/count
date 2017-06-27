@@ -50,12 +50,11 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $# -eq 0 ]] ; then
-  >&2 echo 'no files given'
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
-
-INPUT=$@
 
 count(){
   INPUT=$1
