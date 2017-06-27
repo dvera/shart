@@ -30,21 +30,21 @@ docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq repliseq  \
 ### step-by-step workflow
 ```bash
 # pull the pre-built image, create and enter a container inside the directory with your data
-docker run --rm -it -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
+docker run --rm -it -h d4r -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
 
-# define early and late fastq files, here using sample data
-E=$(ls /opt/docker-4dn-repliseq/sample_data/*early*.fastq.gz)
-L=$(ls /opt/docker-4dn-repliseq/sample_data/*late*.fastq.gz)
-NUMSAMPLES=$(echo $E | wc -w)
-rfq="$E $L"
+# define number of CPU threads to use for the pipeline
 NTHREADS=4
 
 # download hg38 and make bwa index
 wget -qO- http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz | gunzip -c > hg38.fa
 index=$(index hg38.fa)
 
+# define early and late fastq files, here using sample data
+E=$(ls /opt/docker-4dn-repliseq/sample_data/*early*.fq.gz)
+L=$(ls /opt/docker-4dn-repliseq/sample_data/*late*.fq.gz)
+
 # clip adapters from reads
-cfq=$(clip -t $NTHREADS $rfq)
+cfq=$(clip -t $NTHREADS $E $L)
 
 # align reads to genome
 bam=$(align -t $NTHREADS -i $index $cfq)
@@ -57,24 +57,15 @@ fbstat=$(samstats -t $NTHREADS $sbam)
 # remove duplicate reads
 rbam=$(dedup -t $NTHREADS $sbam)
 
-# convert bams to beds
-bed=$(bam2bed -t $NTHREADS $rbam)
-
-# make chromsizes file from bam header
-sizes=$(bam2sizes $bam)
-
-# break genome into 5-kb windows
-win=$(window $sizes)
-
 # calculate RPKM bedGraphs for each set of alignments
-bg=$(count -w $win -t $NTHREADS $bed)
+bg=$(count -t $NTHREADS $rbam)
 
 # filter windows with a low average RPKM
 fbg=$(filter -t $NTHREADS $bg)
 
 # define early and late bedGraphs
-ebg=$(echo $fbg | tr ' ' '\n' | head -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
-lbg=$(echo $fbg | tr ' ' '\n' | tail -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
+ebg=$(echo $fbg | tr ' ' '\n' | head -n $(echo $E | wc -w) | tr '\n' ',' | sed 's/,$//g')
+lbg=$(echo $fbg | tr ' ' '\n' | tail -n $(echo $E | wc -w) | tr '\n' ',' | sed 's/,$//g')
 
 # calculate log2 ratios between early and late
 l2r=$(log2ratio $ebg $lbg)
@@ -85,16 +76,4 @@ l2rn=$(normalize -r /opt/docker-4dn-repliseq/sample_data/reference.bg $l2r)
 # loess-smooth profiles using a 300kb span size
 l2rs=$(smooth 300000 $NTHREADS $l2rn)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
