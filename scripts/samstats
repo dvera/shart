@@ -37,12 +37,11 @@ if [ -z $NTHREADS ]; then
   fi
 fi
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no bam files specified'
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
-
-INPUT=$@
 
 samstats(){
   INPUT=$1
