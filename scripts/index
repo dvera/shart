@@ -13,8 +13,6 @@ fi
 
 INDEXFILE=$1
 
-index(){
-  INDEXFILE=$1
   
   if [[ -f ${INDEXFILE}.bwt ]]; then
     INDEXPREFIX=$INDEXFILE
@@ -27,13 +25,10 @@ index(){
     >&2 echo "fasta defined for index, making bwa index from fasta"
     mkdir -p bwaIndex
     INDEXFILE=$(readlink -f $INDEXFILE)
-    (cd bwaIndex && bwa index -p genome $INDEXFILE)
+    (cd bwaIndex && bwa index -p genome $INDEXFILE 1>&2)
     INDEXPREFIX=$(readlink -f bwaIndex)/genome
   else
     >&2 echo "index not found"
     exit 1
   fi
   echo $INDEXPREFIX
- }
-
-index $INDEXFILE
