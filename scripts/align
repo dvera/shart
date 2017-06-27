@@ -50,12 +50,11 @@ if [[ -z $INDEXFILE ]]; then
   echo "must define an bwa index with -i"
 fi
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no fastq files specified'
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
-
-INPUT=$@
 
 align(){
 
