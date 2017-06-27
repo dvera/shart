@@ -72,4 +72,4 @@ intersect(){
 
 export -f intersect
 
-parallel --will-cite -k -j $NTHREADS "intersect {} filtered.bed" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "intersect {} filtered.bed" ::: $INPUT

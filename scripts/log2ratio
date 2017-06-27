@@ -66,7 +66,7 @@ EBGS=$(echo $EBGS | tr ',' ' ')
 LBGS=$(echo $LBGS | tr ',' ' ')
 
 # using 1 thread until I figure out how to get equivalent function of --link with older versions of parallel
-parallel --link --will-cite -k -j 1 l2r ::: $EBGS ::: $LBGS
+parallel --link --no-notice -k -j 1 l2r ::: $EBGS ::: $LBGS
 
 
 # BGLINES=$(wc -l $EARLYBG | cut -d" " -f 1)

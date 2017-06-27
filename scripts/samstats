@@ -55,4 +55,4 @@ samstats(){
 
 export -f samstats
 
-parallel --will-cite -k -j $NTHREADS "samstats {}" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "samstats {}" ::: $INPUT

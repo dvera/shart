@@ -78,5 +78,5 @@ normalize(){
 
 export -f normalize
 
-parallel --will-cite -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
 

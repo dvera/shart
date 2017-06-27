@@ -66,4 +66,4 @@ dedup(){
 
 export -f dedup
 
-parallel --will-cite -k -j $NTHREADS "dedup {}" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "dedup {}" ::: $INPUT

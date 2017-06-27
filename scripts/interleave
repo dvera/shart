@@ -53,4 +53,4 @@ interleave(){
   echo $OUTPUT
 }
 
-parallel --will-cite -k -j $NTHREADS interleave :: $R1 $R2
+parallel --no-notice -k -j $NTHREADS interleave :: $R1 $R2

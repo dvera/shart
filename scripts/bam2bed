@@ -75,4 +75,4 @@ bam2bed(){
 
 export -f bam2bed
 
-parallel --will-cite -k -j $NTHREADS "bam2bed {} $MEMPERTHREAD" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "bam2bed {} $MEMPERTHREAD" ::: $INPUT

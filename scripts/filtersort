@@ -67,4 +67,4 @@ filtersort(){
 
 export -f filtersort
 
-parallel --will-cite -k -j $NTHREADS "filtersort {} $MEMPERTHREAD" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "filtersort {} $MEMPERTHREAD" ::: $INPUT

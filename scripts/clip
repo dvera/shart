@@ -58,4 +58,4 @@ clip(){
 
 export -f clip
 
-parallel --will-cite -k -j $NTHREADS "clip {}" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "clip {}" ::: $INPUT
