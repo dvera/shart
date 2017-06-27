@@ -36,12 +36,12 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $# -lt 2 ]] ; then
-  echo 'no files given'
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
 
-INPUT=$@
 NUMSAMPLES=$(echo $INPUT | tr ' ' '\n' | paste - - | wc -l)
 EBGS=$(echo $INPUT | tr ' ' '\n' | head -n $NUMSAMPLES)
 LBGS=$(echo $INPUT | tr ' ' '\n' | tail -n $NUMSAMPLES)
