@@ -5,6 +5,7 @@ ENV PATH=/opt/docker-4dn-repliseq/scripts:/opt/FastQC:/usr/local/sbin:/usr/local
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y \
+  curl\
   git\
   gcc \
   g++ \
@@ -22,6 +23,8 @@ RUN apt-get update && apt-get install -y \
   openjdk-9-jre \
   perl \
   parallel
+
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
 
 RUN wget -O- https://github.com/lh3/bwa/archive/v0.7.15.tar.gz | tar zx && \
  cd /root/bwa-0.7.15/ && \
