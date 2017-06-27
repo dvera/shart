@@ -5,6 +5,7 @@ ENV PATH=/opt/docker-4dn-repliseq/scripts:/opt/FastQC:/usr/local/sbin:/usr/local
 WORKDIR /root
 
 RUN apt-get update && apt-get install -y \
+  bc \
   curl\
   g++ \
   gcc \
