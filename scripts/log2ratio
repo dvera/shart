@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads ] sample1_early.bg,[sample2_early.bg,sampleN_early.bg ] sample1_late.bg,[sample2_late.bg,sampleN_late.bg" 1>&2
+  echo "Usage: $(basename $0) [-t threads ] sample1_early.bg [sample2_early.bg sampleN_early.bg ] sample1_late.bg [sample2_late.bg sampleN_late.bg]" 1>&2
   echo "" 1>&2
   exit 1
 }
@@ -27,7 +27,11 @@ while getopts ":t:" opt; do
 done
 
 if [ -z $NTHREADS ]; then
-  NTHREADS=1
+  if [ -z $NUMTHREADS ]; then
+    NTHREADS=$NUMTHREADS
+  else
+    NTHREADS=1
+  fi
 fi
 
 shift $((OPTIND-1))
@@ -37,9 +41,10 @@ if [[ $# -lt 2 ]] ; then
   exit 1
 fi
 
-#INPUT=$@
-EBGS=$1
-LBGS=$2
+INPUT=$@
+NUMSAMPLES=$(echo $INPUT | tr ' ' '\n' | paste - - | wc -l)
+EBGS=$(echo $INPUT | tr ' ' '\n' | head -n $NUMSAMPLES)
+LBGS=$(echo $INPUT | tr ' ' '\n' | tail -n $NUMSAMPLES)
 
 l2r(){
   EBG=$1
@@ -61,9 +66,6 @@ l2r(){
 }
 
 export -f l2r
-
-EBGS=$(echo $EBGS | tr ',' ' ')
-LBGS=$(echo $LBGS | tr ',' ' ')
 
 # using 1 thread until I figure out how to get equivalent function of --link with older versions of parallel
 parallel --link --no-notice -k -j 1 l2r ::: $EBGS ::: $LBGS
