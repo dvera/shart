@@ -39,14 +39,11 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no files given'
-  >&2 echo ''
-  usage
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
-
-INPUT=$@
 
 if [[ ! -f $REFERENCE ]]; then >&2 echo "file \"$REFERENCE\" not found"; exit 1; fi
 if [[ $REFERENCE != *.bg ]]; then >&2 echo "file \"$REFERENCE\" is not a bedGraph file"; exit 1; fi
