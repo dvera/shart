@@ -39,7 +39,11 @@ done
 shift $((OPTIND-1))
 
 if [ -z $NTHREADS ]; then
-  NTHREADS=1
+  if [ -z $NUMTHREADS ]; then
+    NTHREADS=1
+  else
+    NTHREADS=$NUMTHREADS
+  fi
 fi
 
 if [[ -z $INDEXFILE ]]; then
