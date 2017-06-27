@@ -28,9 +28,9 @@ done
 
 if [ -z $NTHREADS ]; then
   if [ -z $NUMTHREADS ]; then
-    NTHREADS=$NUMTHREADS
-  else
     NTHREADS=1
+  else
+    NTHREADS=$NUMTHREADS
   fi
 fi
 
