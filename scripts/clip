@@ -36,12 +36,12 @@ fi
 
 shift $((OPTIND-1))
 
-if [[ $# -eq 0 ]] ; then
-  echo 'no fastq files specified'
-  exit 1
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
 fi
 
-INPUT=$@
 
 clip(){
   INPUT=$1
