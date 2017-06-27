@@ -6,13 +6,16 @@ usage() {
   exit 1
 }
 
-while getopts ":t:w:" opt; do
+while getopts ":t:w:m:" opt; do
   case $opt in
+  m)
+    MINSIZE=$OPTARG
+   ;;
   t)
     NTHREADS=$OPTARG
    ;;
   w)
-    WINDOWBED=$OPTARG
+    WINSIZE=$OPTARG
    ;;
   \?)
    >&2 echo "Invalid option: -$OPTARG"
@@ -29,6 +32,14 @@ while getopts ":t:w:" opt; do
   esac
 done
 
+if [ -z $WINSIZE ]; then
+  WINSIZE=5000
+fi
+
+if [ -z $MINSIZE ]; then
+  MINSIZE=10000000
+fi
+
 if [ -z $NTHREADS ]; then
   NTHREADS=1
 fi
@@ -40,41 +51,33 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-if [[ -z $WINDOWBED ]] ; then
-  >&2 echo 'window bed not provided'
-  exit 1
-fi
-
 INPUT=$@
 
 count(){
   INPUT=$1
-  WINDOWBED=$2
+  WINSIZE=$2
+  MINSIZE=$3
   
   # check if file exists
   if [[ ! -f $INPUT ]]; then >&2 echo "file \"$INPUT\" not found"; exit 1; fi
-  if [[ ! -f $WINDOWBED ]]; then >&2 echo "file \"$WINDOWBED\" not found"; exit 1; fi
   
   # check input is a bed
-  if [[ $INPUT != *.bed ]]; then >&2 echo "input is not a bed file"; exit 1; fi
-  if [[ $WINDOWBED != *.bed ]]; then >&2 echo "window file is not a bed file"; exit 1; fi
+  if [[ $INPUT != *.bam ]]; then >&2 echo "input is not a bam file"; exit 1; fi
   
-  BASE="$(basename $INPUT | sed 's/\.bed$//g')"
-  WBASE="$(basename $WINDOWBED | sed 's/\.bed//g')"
-  OUTPUT=${BASE}_${WBASE}.bg
+  BASE="$(basename $INPUT | sed 's/\.bam$//g')"
+  OUTPUT=${BASE}_w${WINSIZE}.bg
   
-  SCALE=$(echo "1000000/$(cat $INPUT | wc -l)" | bc -l)
+  SCALE=$(samtools view -c $INPUT)
   
-  bedtools intersect -sorted -c -b $INPUT -a $WINDOWBED | \
-  awk -v s=$SCALE '{print $1,$2,$3,$4*1000*(s/($3-$2)) }' OFS='\t' > $OUTPUT
+  samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | \
+  awk -v minsize=$MINSIZE '$2>minsize' OFS='\t' | \
+  bedtools makewindows -w $WINSIZE -g /dev/stdin | \
+  bedtools coverage -counts -sorted -c -a stdin -b $INPUT | \
+  awk -v scale=$SCALE '{print $1,$2,$3,$4*1000*(scale/($3-$2)) }' OFS='\t' > $OUTPUT
   
   echo $OUTPUT
 }
 
 export -f count
 
-parallel --will-cite -k -j $NTHREADS "count {} $WINDOWBED" ::: $INPUT
-
-
-
-
+parallel --will-cite -k -j $NTHREADS "count {} $WINSIZE $MINSIZE" ::: $INPUT
