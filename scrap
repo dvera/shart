@@ -1,3 +1,0 @@
-# convert a function definition line to new-line separated arguments
-
-echo 'help <- function test , data=TRUE, is = "string"  ,here, c("but" , "dont", "see","this")' | sed -e ':a;s/^\(\(([^(]*)\|[^(,]*\)*\),/\1|/;ta' | tr '|' '\n'
