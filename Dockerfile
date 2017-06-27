@@ -6,25 +6,27 @@ WORKDIR /root
 
 RUN apt-get update && apt-get install -y \
   curl\
-  git\
-  gcc \
   g++ \
-  wget \
+  gcc \
+  git\
+  libbz2-dev \
+  libcurl4-openssl-dev \
+  liblzma-dev \
+  libssl-dev \
   make \
-  zlib1g-dev \
+  man \
+  openjdk-9-jre \
+  parallel \
+  perl \
   python-dev \
   python-pip \
-  libbz2-dev \
-  liblzma-dev \
-  unzip \
   r-base-dev \
-  libcurl4-openssl-dev \
-  libssl-dev \
-  openjdk-9-jre \
-  perl \
-  parallel
-
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+  unzip \
+  wget \
+  zlib1g-dev
+  
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
+ apt-get install -y git-lfs
 
 RUN wget -O- https://github.com/lh3/bwa/archive/v0.7.15.tar.gz | tar zx && \
  cd /root/bwa-0.7.15/ && \
