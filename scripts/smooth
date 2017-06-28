@@ -53,7 +53,7 @@ removeext <- function( filenames ){
 #threads <- as.numeric(args[2])
 #bgfiles <- args[3:length(args)]
 
-	options(scipen=9999)
+options(scipen=9999)
 	
   if(lspan<1){
 		stop("lspan must indicate distance in bp")
@@ -80,11 +80,11 @@ removeext <- function( filenames ){
 				cur[,k] <- tryCatch({
 						predict(loess(cur[,k]~cur[,2],span=chromlspan),cur[,2])
 					},warning = function(war){
-						warning(paste(bgnames[x],"chromosome",cur[1,1],":",war))
+						#warning(paste(bgnames[x],"chromosome",cur[1,1],":",war))
 						out <- predict(loess(cur[,k]~cur[,2],span=chromlspan),cur[,2])
 						return(out)
 					},error = function(err){
-						warning(paste("smoothing failed for file",bgnames[x],"chromosome",cur[1,1],":",err))
+						#warning(paste("smoothing failed for file",bgnames[x],"chromosome",cur[1,1],":",err))
 						return(cur[,k])
 					}
 				)
