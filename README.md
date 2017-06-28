@@ -28,13 +28,18 @@ docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq repliseq  \
 ```
 
 ### step-by-step workflow
+
+#### setup
 ```bash
 # pull the pre-built image, create and enter a container inside the directory with your data
 docker run --rm -it -h d4r -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
 
 # define number of CPU threads to use for the pipeline
-NTHREADS=4
+export NUMTHREADS=8
+```
+#### define your input files
 
+```bash
 # download hg38 and make bwa index
 wget -qO- http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz | gunzip -c > hg38.fa
 index=$(index hg38.fa)
@@ -42,30 +47,30 @@ index=$(index hg38.fa)
 # define early and late fastq files, here using sample data
 E=$(ls /opt/docker-4dn-repliseq/sample_data/*early*.fq.gz)
 L=$(ls /opt/docker-4dn-repliseq/sample_data/*late*.fq.gz)
+```
 
+#### execute workflow step by step
+
+```bash
 # clip adapters from reads
-cfq=$(clip -t $NTHREADS $E $L)
+cfq=$(clip $E $L)
 
 # align reads to genome
-bam=$(align -t $NTHREADS -i $index $cfq)
-bstat=$(samstats -t $NTHREADS $bam)
+bam=$(align -i $index $cfq)
+bstat=$(samstats $bam)
 
 # filter bams by alignment quality and sort by position
-sbam=$(filtersort -t $NTHREADS $bam)
-fbstat=$(samstats -t $NTHREADS $sbam)
+sbam=$(filtersort $bam)
+fbstat=$(samstats $sbam)
 
 # remove duplicate reads
-rbam=$(dedup -t $NTHREADS $sbam)
+rbam=$(dedup $sbam)
 
 # calculate RPKM bedGraphs for each set of alignments
-bg=$(count -t $NTHREADS $rbam)
+bg=$(count $rbam)
 
 # filter windows with a low average RPKM
-fbg=$(filter -t $NTHREADS $bg)
-
-# define early and late bedGraphs
-ebg=$(echo $fbg | tr ' ' '\n' | head -n $(echo $E | wc -w) | tr '\n' ',' | sed 's/,$//g')
-lbg=$(echo $fbg | tr ' ' '\n' | tail -n $(echo $E | wc -w) | tr '\n' ',' | sed 's/,$//g')
+fbg=$(filter $bg)
 
 # calculate log2 ratios between early and late
 l2r=$(log2ratio $ebg $lbg)
@@ -75,5 +80,9 @@ l2rn=$(normalize -r /opt/docker-4dn-repliseq/sample_data/reference.bg $l2r)
 
 # loess-smooth profiles using a 300kb span size
 l2rs=$(smooth 300000 $NTHREADS $l2rn)
-```
 
+```
+#### or use pipes
+```bash
+clip $E $L | align -i $index | filtersort | dedup | count | filter | log2ratio | normalize | smooth
+```
