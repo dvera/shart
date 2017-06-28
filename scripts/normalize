@@ -87,7 +87,7 @@ normalize(){
   paste <(sort -T . -k4,4g $BG) <(shuf -n $BGLINES $RF | sort -k4,4g) | \
     cut -f 1,2,3,8 | sort -k1,1 -k2,2n > $OUTPUT
   
-  #rm -f $TMPREFN
+  rm -f $TMPREFN
   
   echo $OUTPUT
 }
@@ -96,13 +96,11 @@ export -f iqrn
 export -f normalize
 
 if [[ ! -f $REFERENCE ]]; then
-  >&2 echo "reference file not found, making an average distribution after IQR-normalizing input bedGraphs"
+  >&2 echo "reference file not found, making an average distribution"
   INPUTI=$(parallel --no-notice -k -j $NTHREADS "iqrn {}" ::: $INPUT)
-  >&2 echo $INPUTI
   tmprefi="$(mktemp).bg"
   cat $INPUTI > $tmprefi
   REFERENCE=$tmprefi
-  >&2 echo "reference is $REFERENCE"
 else
   if [[ $REFERENCE != *.bg ]]; then
     >&2 echo "file \"$REFERENCE\" is not a bedGraph file"
@@ -112,4 +110,4 @@ fi
 
 parallel --no-notice -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
 
-#rm -f tmprefi
+rm -f tmprefi
