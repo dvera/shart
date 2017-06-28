@@ -89,44 +89,51 @@ LF=$2
 if [[ -z $PAIRED ]]; then
   #todo: make sure length of EARLYBGS and LATEBGS is even
   #todo: check to see if read names in r1 and r2 are identical
-  ER1=$(echo $EF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
-  ER2=$(echo $EF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
-  LR1=$(echo $LF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
-  LR2=$(echo $LF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
-  
+#   ER1=$(echo $EF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+#   ER2=$(echo $EF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+#   LR1=$(echo $LF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+#   LR2=$(echo $LF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+  >&2 echo "paired-end not supported yet"
+  exit 1
 #   ER1=$(echo $ER1 | tr ' ' ',')
 #   ER2=$(echo $ER2 | tr ' ' ',')
 #   LR1=$(echo $LR1 | tr ' ' ',')
 #   LR2=$(echo $LR2 | tr ' ' ',')
 
-  E=$(interleave -t $NTHREADS $ER1 $ER2)
-  L=$(interleave -t $NTHREADS $LR1 $LR2)
+#   E=$(interleave -t $NTHREADS $ER1 $ER2)
+#   L=$(interleave -t $NTHREADS $LR1 $LR2)
 else
   E=$(echo $EF | tr ',' ' ')
   L=$(echo $LF | tr ',' ' ')
 fi
 
-NUMSAMPLES=$(echo $E | wc -w)
+# clip adapters from reads
+cfq=$(clip $E $L)
 
-rfq="$E $L"
-index=$(index $INDEXFILE)
-cfq=$(clip -t $NTHREADS $rfq)
-bam=$(align -t $NTHREADS -i $index $cfq)
-bstat=$(samstats -t $NTHREADS $bam)
-sbam=$(filtersort -t $NTHREADS $bam)
-fbstat=$(samstats -t $NTHREADS $sbam)
-rbam=$(dedup -t $NTHREADS $sbam)
-bed=$(bam2bed -t $NTHREADS $rbam)
-sizes=$(bam2sizes $bam)
-win=$(window $sizes)
-bg=$(count -w $win -t $NTHREADS $bed)
-fbg=$(filter -t $NTHREADS $bg)
+# align reads to genome
+bam=$(align -i $index $cfq)
+bstat=$(samstats $bam)
 
-ebg=$(echo $fbg | tr ' ' '\n' | head -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
-lbg=$(echo $fbg | tr ' ' '\n' | tail -n $NUMSAMPLES | tr '\n' ',' | sed 's/,$//g')
+# filter bams by alignment quality and sort by position
+sbam=$(filtersort $bam)
+fbstat=$(samstats $sbam)
 
-l2r=$(log2ratio $ebg $lbg)
-l2rn=$(normalize -r $REFERENCE $l2r)
-l2rs=$(smooth $l2rn)
+# remove duplicate reads
+rbam=$(dedup $sbam)
+
+# calculate RPKM bedGraphs for each set of alignments
+bg=$(count $rbam)
+
+# filter windows with a low average RPKM
+fbg=$(filter $bg)
+
+# calculate log2 ratios between early and late
+l2r=$(log2ratio $fbg)
+
+# quantile-normalize replication timing profiles to the example reference bedGraph
+l2rn=$(normalize $l2r)
+
+# loess-smooth profiles using a 300kb span size
+l2rs=$(smooth 300000 $NTHREADS $l2rn)
 
 
