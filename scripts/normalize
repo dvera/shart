@@ -98,9 +98,11 @@ export -f normalize
 if [[ ! -f $REFERENCE ]]; then
   >&2 echo "reference file not found, making an average distribution after IQR-normalizing input bedGraphs"
   INPUTI=$(parallel --no-notice -k -j $NTHREADS "iqrn {}" ::: $INPUT)
+  echo $INPUTI
   tmprefi="$(mktemp).bg"
   cat $INPUTI > $tmprefi
   REFERENCE=$tmprefi
+  echo "reference is $REFERENCE"
 else
   if [[ $REFERENCE != *.bg ]]; then
     >&2 echo "file \"$REFERENCE\" is not a bedGraph file"
