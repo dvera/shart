@@ -98,7 +98,7 @@ export -f normalize
 if [[ ! -f $REFERENCE ]]; then
   >&2 echo "reference file not found, making an average distribution after IQR-normalizing input bedGraphs"
   INPUTI=$(parallel --no-notice -k -j $NTHREADS "iqrn {}" ::: $INPUT)
-  tmpref="$(mktemp).bg"
+  tmprefi="$(mktemp).bg"
   cat $INPUTI > $tmprefi
   REFERENCE=$tmprefi
 else
