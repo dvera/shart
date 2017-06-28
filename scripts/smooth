@@ -1,4 +1,39 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env r
+#
+# A second example to install one or more packages, now with option parsing
+#
+# Copyright (C) 2011 - 2014  Dirk Eddelbuettel
+# Copyright (C) 2014 - 2015  Carl Boettiger and Dirk Eddelbuettel
+#
+# Released under GPL (>= 2)
+
+## load docopt package from CRAN
+suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
+
+## configuration for docopt
+doc <- "Usage: install.r [-t NUMTHREADS] [-l lspan] [-h] [BGFILES ...]
+
+-t --threads NUMTHREADS     number of CPU threads to use [default: 0]
+-l --lspan LSPAN                 span size in bp [default: 300000]
+-h --help                   show this help text"
+
+## docopt parsing
+opt <- docopt(doc)
+bgfiles <- opt$BGFILES
+lspan <- as.numeric(opt$lspan)
+
+if(opt$threads==0){
+	nthreads <- as.numeric(Sys.getenv("NUMTHREADS"))
+	if(is.na(nthreads)){
+		threads=1
+	}else{
+		threads=nthreads
+	}
+} else{
+		threads=opt$threads
+}
+
+print(paste("using",threads,"threads"))
 
 require(parallel,quietly=T)
 
@@ -11,12 +46,12 @@ removeext <- function( filenames ){
 	filenames
 }
 
-usage <- function(){cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")}
-args = commandArgs(trailingOnly=TRUE)
-if(length(args)<3){usage();stop("see usage")}
-lspan <- as.numeric(args[1])
-threads <- as.numeric(args[2])
-bgfiles <- args[3:length(args)]
+#usage <- function(){cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")}
+#args = commandArgs(trailingOnly=TRUE)
+#if(length(args)<3){usage();stop("see usage")}
+#lspan <- as.numeric(args[1])
+#threads <- as.numeric(args[2])
+#bgfiles <- args[3:length(args)]
 
 	options(scipen=9999)
 	
@@ -28,7 +63,8 @@ bgfiles <- args[3:length(args)]
 	numbgs <- length(bgfiles)
 	outnames <- paste(bgnames,"_loess",lspan,".bg",sep="")
 	
-	dump <- mclapply(seq_len(numbgs), function(x){
+	#dump <- mclapply(seq_len(numbgs), function(x){
+	dump <- lapply(seq_len(numbgs), function(x){
 		curbg <- as.data.frame( read.table ( bgfiles[x], header=FALSE, stringsAsFactors=FALSE ) )
 		chroms    <- unique(curbg[,1])
 		numchroms <- length(chroms)
@@ -62,7 +98,8 @@ bgfiles <- args[3:length(args)]
 		write.table(smoothbg,file=outnames[x],col.names=FALSE,quote=FALSE, sep="\t", row.names=FALSE)
 		rm(curbg)
 		gc()
-	}, mc.cores=threads, mc.preschedule=FALSE)
+	})
+  #}, mc.cores=threads, mc.preschedule=FALSE)
 
 cat(paste(outnames,collapse="\n"))
 
