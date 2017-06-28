@@ -58,12 +58,12 @@ l2r(){
   if [[ $LBG != *.bg ]]; then echo "input is not a bedGraph file"; exit 1; fi
   
   EMIN=$(cut -f 4 $EBG | sort | uniq -c | awk '{print $2-a;a=$2}' | sort | uniq -c | awk '{print $1,$2}' | sort -k1,1nr | head -n 1 | cut -d' ' -f 2)
-  LMIN=$(cut -f 4 $EBG | sort | uniq -c | awk '{print $2-a;a=$2}' | sort | uniq -c | awk '{print $1,$2}' | sort -k1,1nr | head -n 1 | cut -d' ' -f 2)
+  LMIN=$(cut -f 4 $LBG | sort | uniq -c | awk '{print $2-a;a=$2}' | sort | uniq -c | awk '{print $1,$2}' | sort -k1,1nr | head -n 1 | cut -d' ' -f 2)
   
   OUTPUT="$(basename $EBG | sed 's/\.bg$/_l2r\.bg/g')"
   LOGFILE=${OUTPUT}.log
   
-  paste $EBG $LBG | awk -v emin=$EMIN -v lmin=$LMIN'{print $1,$2,$3,log(($4+emin)/($8+lmin))/log(2)}' OFS='\t' > $OUTPUT
+  paste $EBG $LBG | awk -v emin=$EMIN -v lmin=$LMIN '{print $1,$2,$3,log(($4+emin)/($8+lmin))/log(2)}' OFS='\t' > $OUTPUT
   
   echo $OUTPUT
 }
