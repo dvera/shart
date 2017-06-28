@@ -63,7 +63,7 @@ filtersort(){
   OUTPUT=${BASE}_q20_sort.bam
   
   samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD - > $OUTPUT
-  >&2 echo "samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD - > $OUTPUT"
+  #>&2 echo "samtools view -bq 20 $INPUT | samtools sort -m $MEMPERTHREAD - > $OUTPUT"
   
   echo $OUTPUT 
 }
