@@ -45,13 +45,28 @@ else
   INPUT=$@
 fi
 
-if [[ ! -f $REFERENCE ]]; then >&2 echo "file \"$REFERENCE\" not found"; exit 1; fi
-if [[ $REFERENCE != *.bg ]]; then >&2 echo "file \"$REFERENCE\" is not a bedGraph file"; exit 1; fi
-  
 for i in $INPUT; do
   if [[ ! -f $i ]]; then >&2 echo "file \"$i\" not found"; exit 1; fi
   if [[ $i != *.bg ]]; then >&2 echo "file \"$i\" is not a bedGraph file"; exit 1; fi
 done
+
+iqrn(){
+  BG=$1
+  BASE="$(basename $BG | sed 's/\.bg$//g')"
+  OUTPUT="${BASE}_inorm.bg"
+  
+  NUMLINES=$(cat $BG | wc -l)
+  Q1=$(echo $NUMLINES/4 | bc)
+  Q2=$(echo $NUMLINES/2 | bc)
+  Q3=$(echo 3*$NUMLINES/4 | bc)
+  ST=$(sort -k4,4n $BG | \
+    awk -v q1=$Q1 -v q2=$Q2 -v q3=$Q3 '{if(NR==q1){Q1=$4};if(NR==q2){Q2=$4};if(NR==q3){Q3=$4}}END{print Q3-Q1,Q2}')
+  REFIQR=5
+  IQR=$(echo $ST | cut -d ' ' -f 1)
+  MDN=$(echo $ST | cut -d ' ' -f 2)
+  awk -v refiqr=$REFIQR -v mdn=$MDN -v iqr=$IQR 'BEGIN{scalar=refiqr/iqr)} {print $1,$2,$3,($4-mdn)*scalar}' OFS='\t' > $OUTPUT
+
+}
 
 normalize(){
   BG=$1
@@ -61,7 +76,7 @@ normalize(){
   OUTPUT="${BASE}_qnorm.bg"
   BGLINES=$(cat $BG | wc -l)
   RFLINES=$(cat $RF | wc -l)
-  TMPREFN="${BASE}_tmpRef.bg"
+  TMPREFN="$(mktemp).bg"
   
   if [[ $BGLINES -gt $RFLINES ]]; then
     COPYNUM=$((1+BGLINES/RFLINES))
@@ -77,7 +92,22 @@ normalize(){
   echo $OUTPUT
 }
 
+export -f iqrn
 export -f normalize
+
+if [[ ! -f $REFERENCE ]]; then
+  >&2 echo "file \"$REFERENCE\" not found, making an average distribution after IQR-normalizing input bedGraphs"
+  INPUTI=$(parallel --no-notice -k -j $NTHREADS "iqrn {}" ::: $INPUT)
+  tmpref="$(mktemp).bg"
+  cat $INPUTI > $tmprefi
+  REFERENCE=$tmprefi
+else
+  if [[ $REFERENCE != *.bg ]]; then
+    >&2 echo "file \"$REFERENCE\" is not a bedGraph file"
+    exit 1
+  fi
+fi
 
 parallel --no-notice -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
 
+rm -f tmprefi
