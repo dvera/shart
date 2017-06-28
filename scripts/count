@@ -70,7 +70,7 @@ count(){
   BASE="$(basename $INPUT | sed 's/\.bam$//g')"
   OUTPUT=${BASE}_w${WINSIZE}.bg
   
-  SCALE=$(samtools view -c $INPUT)
+  SCALE=$(echo "1000000/$(samtools view -c $INPUT)" | bc -l)
   
   samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | \
   awk -v minsize=$MINSIZE '$2>minsize' OFS='\t' | \
