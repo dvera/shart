@@ -102,7 +102,7 @@ if [[ ! -f $REFERENCE ]]; then
   tmprefi="$(mktemp).bg"
   cat $INPUTI > $tmprefi
   REFERENCE=$tmprefi
-  echo "reference is $REFERENCE"
+  >&2 echo "reference is $REFERENCE"
 else
   if [[ $REFERENCE != *.bg ]]; then
     >&2 echo "file \"$REFERENCE\" is not a bedGraph file"
