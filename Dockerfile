@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
   libcurl4-openssl-dev \
   liblzma-dev \
   libssl-dev \
+  littler \
   make \
   man \
   openjdk-9-jre \
@@ -66,5 +67,7 @@ RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' &&
  R -e 'devtools::install_github("dvera/travis")'
  
 RUN git clone https://github.com/dvera/docker-4dn-repliseq /opt/docker-4dn-repliseq
+
+RUN R -e "install.packages('docopt', repos = 'http://cran.us.r-project.org')"
 
 CMD bash
