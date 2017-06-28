@@ -73,10 +73,10 @@ bg=$(count $rbam)
 fbg=$(filter $bg)
 
 # calculate log2 ratios between early and late
-l2r=$(log2ratio $ebg $lbg)
+l2r=$(log2ratio $fbg)
 
 # quantile-normalize replication timing profiles to the example reference bedGraph
-l2rn=$(normalize -r /opt/docker-4dn-repliseq/sample_data/reference.bg $l2r)
+l2rn=$(normalize $l2r)
 
 # loess-smooth profiles using a 300kb span size
 l2rs=$(smooth 300000 $NTHREADS $l2rn)
