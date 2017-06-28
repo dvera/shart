@@ -65,7 +65,7 @@ iqrn(){
   IQR=$(echo $ST | cut -d ' ' -f 1)
   MDN=$(echo $ST | cut -d ' ' -f 2)
   awk -v refiqr=$REFIQR -v mdn=$MDN -v iqr=$IQR 'BEGIN{scalar=refiqr/iqr} {print $1,$2,$3,($4-mdn)*scalar}' OFS='\t' $BG > $OUTPUT
-
+  echo $OUTPUT
 }
 
 normalize(){
