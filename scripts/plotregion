@@ -74,7 +74,7 @@ ylimits=c( min(unlist(lapply(scores,"[",4))), max(unlist(lapply(scores,"[",4))))
 pngName <- paste0(paste(c(gsub(":","-",strsplit(as.character(Sys.time())," ")[[1]]),region),collapse="_"),".png")
 png(pngName,width=1600,height=800)
 plot(0,0,type='n', xlim=xlims, ylim=ylimits, xlab=paste(region[1],"coordinate (bp)") , ylab="score" , main=paste0(region[1],":",region[2],"-",region[3]) )
-
+abline(h=0,col="grey80")
 for(i in seq_len(numbgs)){
       xvals <-  scores[[i]][,2]
       numvals <- length(xvals)
