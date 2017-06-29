@@ -59,6 +59,7 @@ RUN cd /opt && \
  rm -f fastqc_v0.11.5.zip
 
 RUN pip install cutadapt
+RUN pip install multiqc
 
 RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' && \
  R -e 'devtools::install_github("dvera/conifur")' && \
@@ -68,6 +69,6 @@ RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' &&
  
 RUN git clone https://github.com/dvera/docker-4dn-repliseq /opt/docker-4dn-repliseq
 
-RUN R -e "install.packages(c('docopt','readr'), repos = 'http://cran.us.r-project.org')"
+RUN R -e "install.packages(c('docopt'), repos = 'http://cran.us.r-project.org')"
 
 CMD bash
