@@ -1,4 +1,4 @@
-# docker-4dn-hic
+# docker-4dn-repliseq
 
 This repo contains the source files for a docker image stored in the docker hub container vera/docker-4dn-repliseq
 
@@ -18,14 +18,7 @@ A docker image for executing these scripts can be built yourself or pulled from 
 ```bash
 # execute a step on data in the current directory
 docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq <name_of_script> <args> 
-```
-
-### automated pipeline execution starting with fastq files
-```bash
-# make smoothed and normalized replication timing profiles from early and late fastq files using 5000-bp window sizes and 12 threads
-docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq repliseq  \
-  genome.fa 5000 12 sample1_early.fastq,sample2_early.fastq sample1_late.fastq,sample2_late.fastq
-```
+````
 
 ### step-by-step workflow
 
