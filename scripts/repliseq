@@ -1,12 +1,12 @@
 #!/bin/bash
 
 usage() {
-  >&2 echo "Usage (single-end): $(basename $0) [-t threads] -i bwaIndex"
-  >&2 echo "  sample1_early.fastq[,sample2_early.fastq,sampleN_early.fastq   sample1_late.fastq[,sample2_late.fastq,sampleN_late.fastq]"
+  >&2 echo "Usage (single-end): $(basename $0) [-t threads] [-w windowsize ] [-m minChromSize ] -i bwaIndex"
+  >&2 echo "  sample1_early.fastq [sample2_early.fastq sampleN_early.fastq] sample1_late.fastq [sample2_late.fastq sampleN_late.fastq]"
   >&2 echo ""
   >&2 echo ""
-  >&2 echo "Usage (single-end): $(basename $0) [-t threads] -i bwaIndex"
-  >&2 echo "  sample1_early_R1.fq,sample1_early_R2.fq[,sampleN_early_R1.fq,sampleN_early_R2.fq]  sample1_late_R1.fq,sample1_late_R2.fq[,sampleN_late_R1.fq,sampleN_late_R2.fq]"
+  >&2 echo "Usage (paired-end): $(basename $0) [-t threads] -i bwaIndex"
+  >&2 echo "  sample1_early_R1.fq sample1_early_R2.fq [sampleN_early_R1.fq sampleN_early_R2.fq] sample1_late_R1.fq sample1_late_R2.fq [sampleN_late_R1.fq sampleN_late_R2.fq]"
   >&2 echo ""
   >&2 echo "bwaIndex (-i) can be a path to a bwa index prefix or a tarball of an bwa index"
   >&2 echo ""
@@ -20,22 +20,22 @@ usage() {
 while getopts ":i:t:m:w:r:p" opt; do
   case $opt in
   p)
-   PAIRED=1
+   PAIRARG="-p"
    ;;
   t)
-   NTHREADS=$OPTARG
+   THREADARG="-t $OPTARG"
    ;;
   w)
-   WINDOWSIZE=$OPTARG
+   WINARG="-w $OPTARG"
    ;;
   i)
    INDEXFILE=$OPTARG
    ;;
   m)
-   MEMPERTHREAD=$OPTARG
+   MEMARG="-m $OPTARG"
    ;;
   r)
-   REFERENCE=$OPTARG
+   REFARG="-r $OPTARG"
    ;;
   \?)
    echo "Invalid option: -$OPTARG" >&2
@@ -54,47 +54,43 @@ done
 
 shift $((OPTIND-1))
 
-if [ -z $NTHREADS ]; then
-  NTHREADS=1
-fi
-
-if [[ -z $WINDOWSIZE ]]; then
-  WINDOWSIZE=5000
-fi
-
-if [[ -z $MEMPERTHREAD ]]; then
-  MEMPERTHREAD=5G
-fi
-
-if [[ -z $REFERENCE ]]; then
-  >&2 echo "must define a normalization reference"
-fi
-
 if [[ -z $INDEXFILE ]]; then
   >&2 echo "must define an fasta or bwa index with -i"
 fi
 
 if [[ $# -lt 2 ]] ; then
-  >&2 echo 'no fastq files specified'
+  >&2 echo 'no (or not enough) fastq files specified'
   exit 1
 fi
 
-EF=$1
-LF=$2
 
 #check that dependencies are in PATH and correct versions
 #check if chromsizes or fasta specified with -g
-#check input files
+#check input files (and number of input files is even)
+#print table of E/L R1/R2 for 10 seconds to let user check inputs
 
-if [[ -z $PAIRED ]]; then
+INPUT=$@
+
+
   #todo: make sure length of EARLYBGS and LATEBGS is even
   #todo: check to see if read names in r1 and r2 are identical
-#   ER1=$(echo $EF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
-#   ER2=$(echo $EF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
-#   LR1=$(echo $LF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
-#   LR2=$(echo $LF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
-  >&2 echo "paired-end not supported yet"
-  exit 1
+NUMFILES=$(echo $INPUT | awk '{print NF}')
+NUMPAIRS=$(echo "${NUMFILES}/2" | bc)
+NSP1=$(echo "{$NUMPAIRS+1}" | bc)
+   
+E=$(echo $INPUT | cut -d' ' -f 1-$NUMPAIRS)
+L=$(echo $INPUT | cut -d' ' -f ${NSP1}-${NUMFILES})
+   
+if [[ ! -z $PAIRARG ]]; then
+  ER1=$(echo $E | tr ' ' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+  ER2=$(echo $E | tr ' ' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+  LR1=$(echo $L | tr ' ' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+  LR2=$(echo $L | tr ' ' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+  E=$(interleave $ER1 $ER2)
+  L=$(interleave $LR1 $LR2)
+fi  
+#  >&2 echo "paired-end not supported yet"
+#  exit 1
 #   ER1=$(echo $ER1 | tr ' ' ',')
 #   ER2=$(echo $ER2 | tr ' ' ',')
 #   LR1=$(echo $LR1 | tr ' ' ',')
@@ -102,16 +98,22 @@ if [[ -z $PAIRED ]]; then
 
 #   E=$(interleave -t $NTHREADS $ER1 $ER2)
 #   L=$(interleave -t $NTHREADS $LR1 $LR2)
-else
-  E=$(echo $EF | tr ',' ' ')
-  L=$(echo $LF | tr ',' ' ')
-fi
+#else
+#   ER2=$(echo $EF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+#   LR1=$(echo $LF | tr ',' '\n' | paste - - | cut -f 1 | tr '\n' ',' | sed 's/,$//g')
+#   LR2=$(echo $LF | tr ',' '\n' | paste - - | cut -f 2 | tr '\n' ',' | sed 's/,$//g')
+#   E=$(echo $EF | tr ',' ' ')
+#   L=$(echo $LF | tr ',' ' ')
+# fi
+
+# prepare index
+index=$(index $INDEXFILE)
 
 # clip adapters from reads
 cfq=$(clip $E $L)
 
 # align reads to genome
-bam=$(align -i $index $cfq)
+bam=$(align -i $PAIRARG $THREADARG -i $index $cfq)
 bstat=$(samstats $bam)
 
 # filter bams by alignment quality and sort by position
@@ -134,6 +136,6 @@ l2r=$(log2ratio $fbg)
 l2rn=$(normalize $l2r)
 
 # loess-smooth profiles using a 300kb span size
-l2rs=$(smooth 300000 $NTHREADS $l2rn)
+l2rs=$(smooth $l2rn)
 
 
