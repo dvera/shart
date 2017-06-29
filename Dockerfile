@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
   littler \
   make \
   man \
-  openjdk-9-jre \
+  openjdk-8-jre \
   parallel \
   perl \
   python-dev \
