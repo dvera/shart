@@ -5,7 +5,7 @@ usage() {
   >&2 echo "  sample1_early.fastq [sample2_early.fastq sampleN_early.fastq] sample1_late.fastq [sample2_late.fastq sampleN_late.fastq]"
   >&2 echo ""
   >&2 echo ""
-  >&2 echo "Usage (paired-end): $(basename $0) [-t threads] -i bwaIndex"
+  >&2 echo "Usage (paired-end): $(basename $0) -p [-t threads] [-w windowsize ] [-m minChromSize ] -i bwaIndex"
   >&2 echo "  sample1_early_R1.fq sample1_early_R2.fq [sampleN_early_R1.fq sampleN_early_R2.fq] sample1_late_R1.fq sample1_late_R2.fq [sampleN_late_R1.fq sampleN_late_R2.fq]"
   >&2 echo ""
   >&2 echo "bwaIndex (-i) can be a path to a bwa index prefix or a tarball of an bwa index"
