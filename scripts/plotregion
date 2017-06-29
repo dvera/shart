@@ -1,0 +1,89 @@
+#!/usr/bin/env r
+#
+# A second example to install one or more packages, now with option parsing
+#
+# Copyright (C) 2011 - 2014  Dirk Eddelbuettel
+# Copyright (C) 2014 - 2015  Carl Boettiger and Dirk Eddelbuettel
+#
+# Released under GPL (>= 2)
+
+## load docopt package from CRAN
+suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
+
+## configuration for docopt
+doc <- "Usage: install.r [-c colors] [-r region] [-h] [BGFILES ...]
+
+-r --region REGION               region to plot in the format chr1:5000000-20000000 [default: chr1:5000000-20000000]
+-c --colors COLORS               comma-separated list of colors for bgFiles [default: rainbow]
+-h --help                        show this help text"
+
+cmdRun <- function( cmdString ){
+ res<-lapply(1:length(cmdString), function(i){
+        cmdString.call <- pipe(cmdString[i],open="r")
+        result <- read.delim(cmdString.call, header=FALSE, stringsAsFactors=FALSE)
+        close(cmdString.call)
+        return(result)
+    })
+  return(res)
+}
+
+removeext <- function( filenames ){
+	filenames<-as.character(filenames)
+	for(i in 1:length(filenames)){
+		namevector<-unlist(strsplit(filenames[i],"\\."))
+		filenames[i]<-paste(namevector[1:(length(namevector)-1)],collapse=".")
+	}
+	filenames
+}
+
+options(scipen=9999)
+
+## docopt parsing
+opt <- docopt(doc)
+plotcolors <- opt$colors
+region <- opt$region
+bgFiles <- opt$BGFILES
+
+if(!all(file.exists(bgFiles))){stop("one of the files specified does not exist")}
+
+numbgs=length(bgFiles)
+if(plotcolors=="rainbow"){
+    plotcolors <- rainbow(numbgs)
+} else{
+    plotcolors <- strsplit(plotcolors,",")[[1]]
+    if(length(plotcolors)!=numbgs){stop("number of colors does not equal number of input files")}
+}
+
+legendnames=basename(removeext(bgFiles))
+
+
+region <- gsub(",","",region)
+region <- gsub(":","-",region)
+region <- strsplit(region,"-")[[1]]    
+
+
+cmdString <- paste0(
+  "printf \"%s\\t%s\\t%s\" \"", region[1],"\" \"",region[2],"\" \"",region[3],"\" ",
+  "| bedtools intersect -u -a ", bgFiles, " -b stdin "
+)
+
+scores <- cmdRun( cmdString )
+xlims=c( min(unlist(lapply(scores,"[",2))), max(unlist(lapply(scores,"[",2))))
+ylimits=c( min(unlist(lapply(scores,"[",4))), max(unlist(lapply(scores,"[",4))))
+
+pngName <- paste0(paste(c(gsub(":","-",strsplit(as.character(Sys.time())," ")[[1]]),region),collapse="_"),".png")
+png(pngName,width=1600,height=800)
+plot(0,0,type='n', xlim=xlims, ylim=ylimits, xlab=paste(region[1],"coordinate (bp)") , ylab="score" , main=paste0(region[1],":",region[2],"-",region[3]) )
+
+for(i in seq_len(numbgs)){
+      xvals <-  scores[[i]][,2]
+      numvals <- length(xvals)
+      yvals <-  scores[[i]][,4]
+      points(xvals,yvals,col=plotcolors[i], pch=20)
+}
+
+legend("topright",legend=legendnames, lwd=3, cex=0.8, col=plotcolors)
+dev.off()
+cat(pngName,"\n")
+
+}
