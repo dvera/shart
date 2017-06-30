@@ -54,7 +54,7 @@ if(opt$xlims=="AUTO"){
 	xlims <- as.numeric(strsplit(opt$ylims,",")[[1]])
 }
 
-scores <- lapply( bgfiles, read.table, stringsAsFactors=F, header=F )
+scores <- lapply( bgFiles, read.table, stringsAsFactors=F, header=F )
 scores <- lapply( scores, "[", 4 )
 
 if( grepl( "%" , xlims[1] ) ) {
