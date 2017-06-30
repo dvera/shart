@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+DIRS="
+fastq.interleaved
+fastq.clip
+bam
+bam.q20.sort
+bam.q20.sort.rmdup
+bg
+bg.filt
+bg.filt.l2r
+bg.filt.l2r.qnorm
+bg.filt.l2r.inorm
+bg.filt.l2r.qnorm.loess
+bg.filt.l2r.inorm.loess
+log.samstats
+log.cutadapt
+log.fastqc
+log.rmdup
+png
+"
+
+mkdir -p $DIRS
+
+mv *.png                       png                 || :
+mv *_clip.fastq                fastq.clip          || :
+
+mv *_clip.fastq.log            log.cutadapt        || :
+mv *_clip.fq.log               log.cutadapt        || :
+mv *_fastqc                    log.fastqc          || :
+mv *.samstats                  log.samstats        || :
+mv *_rmdup.bam.log             log.rmdup           || :
+
+mv *_clip_q20_sort_rmdup.bam   bam.q20.sort.rmdup  || :
+mv *_clip_q20_sort.bam         bam.q20.sort        || :
+mv *_clip.bam                  bam                 || :
+
+mv *_filtered_l2r_qnorm_loess*.bg bg.filt.l2r.qnorm.loess || :
+mv *_filtered_l2r_inorm_loess*.bg bg.filt.l2r.inorm.loess || :
+mv *_filtered_l2r_qnorm.bg     bg.filt.l2r.qnorm          || :
+mv *_filtered_l2r_inorm.bg     bg.filt.l2r.inorm          || :
+mv *_filtered_l2r.bg           bg.filt.l2r                || :
+mv *.bg                        bg                         || :
+
+rmdir $DIRS || :
+
