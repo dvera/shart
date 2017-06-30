@@ -1,6 +1,7 @@
 #!/bin/bash
 
 usage() {
+  >&2 echo ""
   >&2 echo "Usage (single-end): $(basename $0) [-t threads] [-w windowsize ] [-m minChromSize ] -i bwaIndex"
   >&2 echo "  sample1_early.fastq [sample2_early.fastq sampleN_early.fastq] sample1_late.fastq [sample2_late.fastq sampleN_late.fastq]"
   >&2 echo ""
@@ -69,14 +70,24 @@ fi
 #check input files (and number of input files is even)
 #print table of E/L R1/R2 for 10 seconds to let user check inputs
 
-INPUT=$@
-
+if [[ -z $@ ]]; then
+  INPUT=$(cat /dev/stdin)
+else
+  INPUT=$@
+fi
 
   #todo: make sure length of EARLYBGS and LATEBGS is even
   #todo: check to see if read names in r1 and r2 are identical
+  
 NUMFILES=$(echo $INPUT | awk '{print NF}')
+
+if [ $((NUMFILES%2)) -ne 0 ]; then
+  >&2 echo "ERROR: number of files must be even, see usage:
+  usage
+fi
+
 NUMPAIRS=$(echo "${NUMFILES}/2" | bc)
-NSP1=$(echo "{$NUMPAIRS+1}" | bc)
+NSP1=$(echo "${NUMPAIRS}+1" | bc)
    
 E=$(echo $INPUT | cut -d' ' -f 1-$NUMPAIRS)
 L=$(echo $INPUT | cut -d' ' -f ${NSP1}-${NUMFILES})
@@ -114,11 +125,9 @@ cfq=$(clip $E $L)
 
 # align reads to genome
 bam=$(align -i $PAIRARG $THREADARG -i $index $cfq)
-bstat=$(samstats $bam)
 
 # filter bams by alignment quality and sort by position
 sbam=$(filtersort $bam)
-fbstat=$(samstats $sbam)
 
 # remove duplicate reads
 rbam=$(dedup $sbam)
@@ -139,7 +148,14 @@ l2rn=$(normalize $l2r)
 l2rs=$(smooth $l2rn)
 
 fastqc -t 12 -q --extract -o fastqc $E $L $cfq
+bamstats=$(samstats $bam)
+# todo: plot rt histograms pre- and post-normalization
+# todo: plot bg histograms pre- and post-filter
+
+organize
 
 multiqc -f .
+
+
 
 
