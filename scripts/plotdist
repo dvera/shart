@@ -1,7 +1,29 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env r
+#
+# A second example to install one or more packages, now with option parsing
+#
+# Copyright (C) 2011 - 2014  Dirk Eddelbuettel
+# Copyright (C) 2014 - 2015  Carl Boettiger and Dirk Eddelbuettel
+#
+# Released under GPL (>= 2)
 
-args = commandArgs(trailingOnly=TRUE)
-bgfiles <- args
+## load docopt package from CRAN
+suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
+
+## configuration for docopt
+doc <- "Usage: install.r [-b breaks] [-x xlims] [-y ylims] [-c colors] [-h] [BGFILES ...]
+
+-b --breaks BREAKS             number of bins in histogram [default: 100]
+-x --xlims XLIMS               comma-separated min,max of X-axis scale (e.g., 0,100) [default: AUTO]
+-y --ylims YLIMS               comma-separated min,max of Y-axis scale (e.g., 0,100) [default: AUTO]
+-c --colors COLORS               comma-separated list of colors for bgFiles [default: rainbow]
+-h --help                        show this help text"
+
+opt <- docopt(doc)
+breaks <- as.numeric(opt$breaks)
+plotcolors <- opt$colors
+bgFiles <- opt$BGFILES
+numbgs=length(bgFiles)
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
@@ -12,10 +34,64 @@ removeext <- function( filenames ){
 	filenames
 }
 
-for(i in seq_len(num(args)){
-  outname <- paste0(removeext(basename(i)),"_hist.pdf")
-  bg <- read.table(i,sep="\t",stringsAsFactors=F,header=F)
-  pdf(outname)
-  plot(density(bg[,4]))
-  dev.off()
+
+legendnames=basename(removeext(bgFiles))
+
+if(!all(file.exists(bgFiles))){stop("one of the files specified does not exist")}
+
+if(plotcolors=="rainbow"){
+    plotcolors <- rainbow(numbgs)
+} else{
+    plotcolors <- strsplit(plotcolors,",")[[1]]
+    if(length(plotcolors)!=numbgs){stop("number of colors does not equal number of input files")}
 }
+
+numbgs<-length(scorelist)
+	scores <- scorelist
+	if(is.null(names(scores))){ names(scores) <- 1:length(scores) }
+	# set x axis lims
+  
+if(opt$xlims=="AUTO"){
+	xlims <- c("1%","99%")
+} else{
+	xlims <- as.numeric(strsplit(opt$ylims,",")[[1]])
+}
+
+scores <- lapply( bgfiles, read.table, stringsAsFactors=F, header=F )
+scores <- lapply( scores, "[", 4 )
+
+if( grepl( "%" , xlims[1] ) ) {
+			xlims[1] <- as.numeric(min(unlist(lapply(scores,quantile, probs=as.numeric(gsub("%","",xlims[1] ) ) / 100 , na.rm=T ))))}
+
+if( grepl( "%" , xlims[2] ) ) {
+			xlims[2] <- as.numeric(max(unlist(lapply(scores,quantile, probs=as.numeric(gsub("%","",xlims[2] ) ) / 100 , na.rm=T ))))}
+
+scores <- lapply( 1:numbgs, function(x) scores[[x]][which(scores[[x]] >= xlims[1] & scores[[x]] <= xlims[2] )] )
+densitylist<-lapply( scores, hist, plot=FALSE, breaks=breaks )
+xl <- lapply( lapply( densitylist, "[" , 4), unlist )
+yl <- lapply( lapply( densitylist, "[" , 2), unlist )
+yl <- lapply( 1:numbgs, function(x) yl[[x]]/length(scores[[x]] ) )
+ymax<-max(unlist(yl))
+
+if(opt$ylims=="AUTO"){
+	ylimits <- c(0,ymax)
+} else{
+	ylimits <- strsplit(opt$ylims,",")[[1]]
+}
+
+
+pngName <- paste0(paste(c(gsub(":","-",strsplit(as.character(Sys.time())," ")[[1]]),"histogram"),collapse="_"),".png")
+png(pngName,width=1200,height=800)
+						 
+plot(0,type="n",ylim=ylimits, xlim=xlims, xlab="score", ylab="proportion")
+abline(v=0,col="grey70")
+
+for(i in 1:numbgs){
+	lines(xl[[i]],yl[[i]],col=plotcolors[i],lwd=2)
+}
+									 
+legend("topright",legend=legendnames, col=plotcolors, lwd=3)
+
+dev.off()
+cat(pngName,"\n")
+
