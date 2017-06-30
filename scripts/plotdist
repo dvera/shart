@@ -46,10 +46,7 @@ if(plotcolors=="rainbow"){
     if(length(plotcolors)!=numbgs){stop("number of colors does not equal number of input files")}
 }
 
-numbgs<-length(scorelist)
-	scores <- scorelist
-	if(is.null(names(scores))){ names(scores) <- 1:length(scores) }
-	# set x axis lims
+
   
 if(opt$xlims=="AUTO"){
 	xlims <- c("1%","99%")
