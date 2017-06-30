@@ -62,7 +62,7 @@ if( grepl( "%" , xlims[1] ) ) {
 
 if( grepl( "%" , xlims[2] ) ) {
 			xlims[2] <- as.numeric(max(unlist(lapply(scores,quantile, probs=as.numeric(gsub("%","",xlims[2] ) ) / 100 , na.rm=T ))))}
-
+xlims <- as.numeric(xlims)
 scores <- lapply( 1:numbgs, function(x) scores[[x]][which(scores[[x]] >= xlims[1] & scores[[x]] <= xlims[2] )] )
 densitylist<-lapply( scores, hist, plot=FALSE, breaks=breaks )
 xl <- lapply( lapply( densitylist, "[" , 4), unlist )
