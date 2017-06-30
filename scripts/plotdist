@@ -24,6 +24,8 @@ breaks <- as.numeric(opt$breaks)
 plotcolors <- opt$colors
 bgFiles <- opt$BGFILES
 numbgs=length(bgFiles)
+xlims <- opt$xlims
+ylims <- opt$ylims
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
