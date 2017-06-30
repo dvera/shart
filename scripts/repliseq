@@ -138,4 +138,8 @@ l2rn=$(normalize $l2r)
 # loess-smooth profiles using a 300kb span size
 l2rs=$(smooth $l2rn)
 
+fastqc -t 12 -q --extract -o fastqc $E $L $cfq
+
+multiqc -f .
+
 
