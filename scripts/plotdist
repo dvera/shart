@@ -55,7 +55,7 @@ if(opt$xlims=="AUTO"){
 }
 
 scores <- lapply( bgFiles, read.table, stringsAsFactors=F, header=F )
-scores <- lapply( scores, "[", 4 )
+scores <- lapply( scores, "[[", 4 )
 
 if( grepl( "%" , xlims[1] ) ) {
 			xlims[1] <- as.numeric(min(unlist(lapply(scores,quantile, probs=as.numeric(gsub("%","",xlims[1] ) ) / 100 , na.rm=T ))))}
