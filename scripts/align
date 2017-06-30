@@ -2,7 +2,7 @@
 
 
 usage() {
-  echo "Usage: $(basename $0) [-t threads] -i bwaIndex fastq1 [fastq2 ... fastqN ]" 1>&2
+  echo "Usage: $(basename $0) [-t threads] -i bwaIndexPrefix|genome.fa fastq1 [fastq2 ... fastqN ]" 1>&2
   echo "" 1>&2
   echo "  bwaIndex can be a path to a bwa index prefix or a tarball of an bwa index" 1>&2
   echo "" 1>&2
@@ -47,7 +47,7 @@ if [ -z $NTHREADS ]; then
 fi
 
 if [[ -z $INDEXFILE ]]; then
-  echo "must define an bwa index with -i"
+  echo "must define a path to a bwa index prefix or genome fasta with -i"
 fi
 
 if [[ -z $@ ]]; then
@@ -55,6 +55,28 @@ if [[ -z $@ ]]; then
 else
   INPUT=$@
 fi
+
+index(){
+  if [[ -f ${INDEXFILE}.bwt ]]; then
+    INDEXPREFIX=$INDEXFILE
+  elif [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.tar.gz ]]; then
+    mkdir -p bwaIndex
+    INDEXPATH=$(readlink -f $INDEXFILE)
+    tar -C bwaIndex -x -f $INDEXPATH
+    INDEXPREFIX=$(readlink -f bwaIndex/*.bwt | sed 's/\.bwt$//g')
+  elif  [[ -f $INDEXFILE ]] && [[ $INDEXFILE == *.fa* ]]; then
+    >&2 echo "fasta defined for index, making bwa index from fasta"
+    mkdir -p bwaIndex
+    INDEXFILE=$(readlink -f $INDEXFILE)
+    (cd bwaIndex && bwa index -p genome $INDEXFILE 1>&2)
+    INDEXPREFIX=$(readlink -f bwaIndex)/genome
+  else
+    >&2 echo "index not found"
+    exit 1
+  fi
+  echo $INDEXPREFIX
+}
+
 
 align(){
 
@@ -86,5 +108,7 @@ align(){
 }
 
 export -f align
+export -f index
 
-parallel --no-notice -k -j 1 "align {} $INDEXFILE $NTHREADS" ::: $INPUT
+INDEXPREFIX=$(index $INDEXFILE)
+parallel --no-notice -k -j 1 "align {} $INDEXPREFIX $NTHREADS" ::: $INPUT
