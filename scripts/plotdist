@@ -50,10 +50,10 @@ if(plotcolors=="rainbow"){
 
 
   
-if(opt$xlims=="AUTO"){
-	xlims <- c("1%","99%")
+if(length(xlims)==1 & xlims=="AUTO"){
+	xlims <- c("0%","100%")
 } else{
-	xlims <- as.numeric(strsplit(opt$ylims,",")[[1]])
+	xlims <- as.numeric(strsplit(opt$xlims,",")[[1]])
 }
 
 scores <- lapply( bgFiles, read.table, stringsAsFactors=F, header=F )
