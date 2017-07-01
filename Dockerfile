@@ -69,6 +69,6 @@ RUN R -e 'install.packages("devtools", repos="http://cran.us.r-project.org")' &&
  
 RUN git clone https://github.com/dvera/docker-4dn-repliseq /opt/docker-4dn-repliseq
 
-RUN R -e "install.packages(c('docopt'), repos = 'http://cran.us.r-project.org')"
+RUN R -e "install.packages(c('docopt','yaml'), repos = 'http://cran.us.r-project.org')"
 
 CMD bash
