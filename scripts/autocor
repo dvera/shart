@@ -1,0 +1,45 @@
+#!/usr/bin/env r
+
+suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
+suppressMessages(library(yaml))
+
+## configuration for docopt
+doc <- "Usage: autocor [BGFILES ...]
+-h --help                        show this help text"
+
+opt <- docopt(doc)
+bgFiles <- opt$BGFILES
+numbgs=length(bgFiles)
+
+removeext <- function( filenames ){
+	filenames<-as.character(filenames)
+	for(i in 1:length(filenames)){
+		namevector<-unlist(strsplit(filenames[i],"\\."))
+		filenames[i]<-paste(namevector[1:(length(namevector)-1)],collapse=".")
+	}
+	filenames
+}
+
+
+legendnames=basename(removeext(bgFiles))
+
+if(!all(file.exists(bgFiles))){stop("one of the files specified does not exist")}
+scores <- lapply( bgFiles, read.table, stringsAsFactors=F, header=F )
+scores <- lapply( scores, "[[", 4 )
+autos <- unlist(lapply(lapply(lapply( scores, acf, lag.max=1, plot=F),"[[",1),"[",2))
+
+names(autos)=legendnames
+autos=lapply(autos,as.list)
+for(i in 1:length(autos)){names(autos[[i]])="autocorrelation"}
+
+write(as.yaml(list(
+  id="acf",
+  section_name="Autocorrelation",
+  description="This plot shows the autocorrelation at lag=1",
+  plot_type="bargraph",
+  pconfig=list(id="barplot_config_only",
+               title="Autocorrelation (lag=1)",
+               ylab="Autocorrelation"),
+	data=autos
+)),"autocorrelation_mqc.yaml")
+
