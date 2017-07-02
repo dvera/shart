@@ -33,13 +33,12 @@ export NUMTHREADS=8
 #### define your input files
 
 ```bash
-# download hg38 and make bwa index
-wget -qO- http://hgdownload.cse.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz | gunzip -c > hg38.fa
-index=$(index hg38.fa)
+# download example data
+wget -cbre robots=off -np -nH --cut-dirs=3 -A 'g*' http://www.bio.fsu.edu/~dvera/share/repliseq/
 
 # define early and late fastq files, here using sample data
-E=$(ls /opt/docker-4dn-repliseq/sample_data/*early*.fq.gz)
-L=$(ls /opt/docker-4dn-repliseq/sample_data/*late*.fq.gz)
+E=$(ls *early*.fq.gz)
+L=$(ls *late*.fq.gz)
 ```
 
 #### execute workflow step by step
