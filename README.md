@@ -1,5 +1,7 @@
 # shart
 
+_S_scripts for _H_igh-throughput _A_nalysis of _R_eplication _T_iming 
+
 This repo contains a dockerfile and scripts for executing a semi-automatated repli-seq analysis pipeline
 
 ## what
