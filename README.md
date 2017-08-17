@@ -1,18 +1,16 @@
 # shart
 
-_S_scripts for _H_igh-throughput _A_nalysis of _R_eplication _T_iming 
+*S*cripts for *H*igh-throughput *A*nalysis of *R*eplication *T*iming 
 
-This repo contains a dockerfile and scripts for executing a semi-automatated repli-seq analysis pipeline
+A dockerfile and scripts for executing a semi-automatated repli-seq analysis pipeline
 
 ## what
 
 This repository contains a dockerfile and scripts in order to generate replication timing profiles from a set of raw reads from sequencing of either early- and late-replicating DNA, or from DNA extracted from cells sorted for S or G1 DNA content.
 
-Sample data files that can be used for testing the tools are included in the `sample_data` folder.
+The scripts for executing the pipeline are under the `scripts` which are added from this repository to the docker image during build time.
 
-The scripts for executing the pipeline are under the `scripts` which are added to the docker container during runtime.
-
-A docker image for executing these scripts can be built yourself or pulled from docker hub (vera/docker-4dn-repliseq). Images built with the dockerfile will contain both the scripts and sample data for running/testing the pipeline.
+A docker image for executing these scripts can be built yourself or pulled from docker hub (vera/docker-4dn-repliseq).
 
 ## how
 
