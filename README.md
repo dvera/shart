@@ -39,6 +39,9 @@ wget -cbre robots=off -np -nH --cut-dirs=3 -A 'g*' http://www.bio.fsu.edu/~dvera
 # define early and late fastq files, here using sample data
 E=$(ls *early*.fq.gz)
 L=$(ls *late*.fq.gz)
+
+index=bwaIndex_hg38/genome
+
 ```
 
 #### execute workflow step by step
