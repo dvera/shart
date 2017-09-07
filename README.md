@@ -79,5 +79,5 @@ l2rs=$(smooth 300000 $NTHREADS $l2rn)
 ```
 #### or use pipes
 ```bash
-clip $E $L | align -i $index | filtersort | dedup | count | filter | log2ratio | normalize
+clip $E $L | align -i $index | filtersort | dedup | count | filter | log2ratio | normalize | smooth
 ```
