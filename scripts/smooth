@@ -2,23 +2,28 @@
 
 ## load docopt package from CRAN
 suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
-options(scipen=9999)
-require(parallel,quietly=T)
 
 ## configuration for docopt
-doc <- "Usage: smooth [-t NUMTHREADS] [-l lspan] [-h] [BGFILES ...]
+doc <- "Usage: smooth [-t threads] [-l lspan] [-h] [BGFILES ...]
 
--t --threads NUMTHREADS          number of CPU threads to use [default: 0]
+-t --threads NUMTHREADS     number of CPU threads to use [default: 0]
 -l --lspan LSPAN                 span size in bp [default: 300000]
--h --help                        show this help text"
+-h --help                   show this help text"
 
 ## docopt parsing
 opt <- docopt(doc)
-bgfiles <- opt$BGFILES
+bgfiles <- unlist(opt$BGFILES)
 lspan <- as.numeric(opt$lspan)
 threads <- as.numeric(opt$threads)
 
-if(opt$threads==0){
+if(length(bgfiles)==0){
+  stdi <- unlist(strsplit(readLines(file("stdin"))," "))
+}
+if(length(bgfiles)==0){
+  bgfiles <- stdi
+}
+
+if(threads==0){
 	nthreads <- as.numeric(Sys.getenv("NUMTHREADS"))
 	if(is.na(nthreads)){
 		threads=1
@@ -27,7 +32,7 @@ if(opt$threads==0){
 	}
 }
 
-print(paste("using",threads,"threads"))
+require(parallel,quietly=T)
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
@@ -37,7 +42,9 @@ removeext <- function( filenames ){
 	}
 	filenames
 }
-	
+
+options(scipen=9999)
+
   if(lspan<1){
 		stop("lspan must indicate distance in bp")
 	}
@@ -45,9 +52,8 @@ removeext <- function( filenames ){
 	bgnames <- basename(removeext(bgfiles))
 	numbgs <- length(bgfiles)
 	outnames <- paste(bgnames,"_loess",lspan,".bg",sep="")
-	
-	#dump <- mclapply(seq_len(numbgs), function(x){
-	dump <- lapply(seq_len(numbgs), function(x){
+
+	dump <- mclapply(seq_len(numbgs), function(x){
 		curbg <- as.data.frame( read.table ( bgfiles[x], header=FALSE, stringsAsFactors=FALSE ) )
 		chroms    <- unique(curbg[,1])
 		numchroms <- length(chroms)
@@ -81,8 +87,6 @@ removeext <- function( filenames ){
 		write.table(smoothbg,file=outnames[x],col.names=FALSE,quote=FALSE, sep="\t", row.names=FALSE)
 		rm(curbg)
 		gc()
-	})
-  #}, mc.cores=threads, mc.preschedule=FALSE)
+}, mc.cores=threads, mc.preschedule=FALSE)
 
-cat(paste(outnames,collapse="\n"))
-
+cat(paste(outnames,collapse="\n"),"\n")
