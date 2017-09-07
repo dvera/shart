@@ -1,26 +1,22 @@
 #!/usr/bin/env r
-#
-# A second example to install one or more packages, now with option parsing
-#
-# Copyright (C) 2011 - 2014  Dirk Eddelbuettel
-# Copyright (C) 2014 - 2015  Carl Boettiger and Dirk Eddelbuettel
-#
-# Released under GPL (>= 2)
 
 ## load docopt package from CRAN
 suppressMessages(library(docopt))       # we need docopt (>= 0.3) as on CRAN
+options(scipen=9999)
+require(parallel,quietly=T)
 
 ## configuration for docopt
-doc <- "Usage: install.r [-t NUMTHREADS] [-l lspan] [-h] [BGFILES ...]
+doc <- "Usage: smooth [-t NUMTHREADS] [-l lspan] [-h] [BGFILES ...]
 
--t --threads NUMTHREADS     number of CPU threads to use [default: 0]
+-t --threads NUMTHREADS          number of CPU threads to use [default: 0]
 -l --lspan LSPAN                 span size in bp [default: 300000]
--h --help                   show this help text"
+-h --help                        show this help text"
 
 ## docopt parsing
 opt <- docopt(doc)
 bgfiles <- opt$BGFILES
 lspan <- as.numeric(opt$lspan)
+threads <- as.numeric(opt$threads)
 
 if(opt$threads==0){
 	nthreads <- as.numeric(Sys.getenv("NUMTHREADS"))
@@ -29,13 +25,9 @@ if(opt$threads==0){
 	}else{
 		threads=nthreads
 	}
-} else{
-		threads=opt$threads
 }
 
 print(paste("using",threads,"threads"))
-
-require(parallel,quietly=T)
 
 removeext <- function( filenames ){
 	filenames<-as.character(filenames)
@@ -45,15 +37,6 @@ removeext <- function( filenames ){
 	}
 	filenames
 }
-
-#usage <- function(){cat("\n  Usage: smooth windowSize threads bgFile1 bgFile2 bgFileN\n")}
-#args = commandArgs(trailingOnly=TRUE)
-#if(length(args)<3){usage();stop("see usage")}
-#lspan <- as.numeric(args[1])
-#threads <- as.numeric(args[2])
-#bgfiles <- args[3:length(args)]
-
-options(scipen=9999)
 	
   if(lspan<1){
 		stop("lspan must indicate distance in bp")
