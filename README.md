@@ -74,7 +74,7 @@ l2r=$(log2ratio $fbg)
 l2rn=$(normalize $l2r)
 
 # loess-smooth profiles using a 300kb span size
-l2rs=$(smooth 300000 $NTHREADS $l2rn)
+l2rs=$(smooth -l 300000 -t $NTHREADS $l2rn)
 
 organize
 multiqc -f .
