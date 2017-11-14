@@ -47,10 +47,10 @@ index=bwaIndex_hg38/genome
 #### execute workflow step by step
 
 ```bash
-# clip adapters from reads
+# clip adapters from reads with cutadapt
 cfq=$(clip $E $L)
 
-# align reads to genome
+# align reads to genome with bwa
 bam=$(align -i $index $cfq)
 bstat=$(samstats $bam)
 
@@ -64,20 +64,25 @@ rbam=$(dedup $sbam)
 # calculate RPKM bedGraphs for each set of alignments
 bg=$(count $rbam)
 
-# filter windows with a low average RPKM
+# filter windows with a low average RPKM among libraries
 fbg=$(filter $bg)
 
 # calculate log2 ratios between early and late
 l2r=$(log2ratio $fbg)
 
-# quantile-normalize replication timing profiles to the example reference bedGraph
+# quantile-normalize RT profiles to the average distribution
 l2rn=$(normalize $l2r)
 
 # loess-smooth profiles using a 300kb span size
 l2rs=$(smooth 300000 $NTHREADS $l2rn)
 
+organize
+multiqc -f .
+
 ```
 #### or use pipes
 ```bash
 clip $E $L | align -i $index | filtersort | dedup | count | filter | log2ratio | normalize | smooth
+organize
+multiqc -f .
 ```
