@@ -43,3 +43,4 @@ write(as.yaml(list(
 	data=autos
 )),"autocorrelation_mqc.yaml")
 
+cat(paste(bgFiles,collapse="\n"))
