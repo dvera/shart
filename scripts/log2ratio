@@ -70,8 +70,7 @@ l2r(){
 
 export -f l2r
 
-# using 1 thread until I figure out how to get equivalent function of --link with older versions of parallel
-parallel --no-notice -k -j 1 l2r ::: $EBGS ::: $LBGS
+parallel --xapply --no-notice -k -j $NTHREADS l2r ::: $EBGS ::: $LBGS
 
 
 # BGLINES=$(wc -l $EARLYBG | cut -d" " -f 1)
