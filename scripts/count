@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 usage() {
-  >&2 echo "Usage: $(basename $0) [-t threads ] [-w windowSize] bed1 [bed2 ... bedN ]"
+  >&2 echo "Usage: $(basename $0) [-t threads ] [-w windowSize] bam1 [bam2 ... bamN ]"
   >&2 echo ""
   exit 1
 }
