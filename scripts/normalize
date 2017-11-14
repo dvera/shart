@@ -68,7 +68,7 @@ iqrn(){
   echo $OUTPUT
 }
 
-normalize(){
+qnormalize(){
   BG=$1
   RF=$2
   
@@ -108,6 +108,6 @@ else
   fi
 fi
 
-parallel --no-notice -k -j $NTHREADS "normalize {} $REFERENCE" ::: $INPUT
+parallel --no-notice -k -j $NTHREADS "qnormalize {} $REFERENCE" ::: $INPUT
 
 rm -f tmprefi
