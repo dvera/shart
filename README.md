@@ -17,7 +17,7 @@ A docker image for executing these scripts can be built yourself or pulled from 
 ### example usage
 ```bash
 # execute a step on data in the current directory
-docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq <name_of_script> <args> 
+docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/shart <name_of_script> <args> 
 ````
 
 ### step-by-step workflow
@@ -25,7 +25,7 @@ docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq <name_of_scr
 #### setup
 ```bash
 # pull the pre-built image, create and enter a container inside the directory with your data
-docker run --rm -it -h d4r -u $UID -w $PWD -v $PWD:$PWD:rw vera/docker-4dn-repliseq
+docker run --rm -it -h d4r -u $UID -w $PWD -v $PWD:$PWD:rw vera/shart
 
 # define number of CPU threads to use for the pipeline
 export NUMTHREADS=8
