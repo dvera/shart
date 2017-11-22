@@ -93,7 +93,7 @@ qnormalize(){
 }
 
 export -f iqrn
-export -f normalize
+export -f qnormalize
 
 if [[ ! -f $REFERENCE ]]; then
   >&2 echo "reference file not found, making an average distribution"
