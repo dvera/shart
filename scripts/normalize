@@ -112,6 +112,7 @@ else
     exit 1
   fi
 fi
+>&2 echo "normalizing data"
 
 parallel --no-notice -k -j $NTHREADS "qnormalize {} $REFERENCE" ::: $INPUT
 
