@@ -85,5 +85,3 @@ for(i in seq_len(numbgs)){
 legend("topright",legend=legendnames, lwd=3, cex=0.8, col=plotcolors)
 dev.off()
 cat(pngName,"\n")
-
-}
