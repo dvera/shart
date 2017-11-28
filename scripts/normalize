@@ -76,18 +76,23 @@ qnormalize(){
   OUTPUT="${BASE}_qnorm.bg"
   BGLINES=$(cat $BG | wc -l)
   RFLINES=$(cat $RF | wc -l)
-  TMPREFN="$(mktemp).bg"
   
   if [[ $BGLINES -gt $RFLINES ]]; then
+    TMPREFN=$(mktemp)
     COPYNUM=$((1+BGLINES/RFLINES))
     cat $(yes "$RF" | head -n $COPYNUM) > $TMPREFN
     RF=$TMPREFN
-  fi
-  
-  paste <(sort -T . -k4,4g $BG) <(shuf -n $BGLINES $RF | sort -k4,4g) | \
+    paste <(sort -T . -k4,4g $BG) <(shuf -n $BGLINES $RF | sort -k4,4g) | \
+    cut -f 1,2,3,8 | \
+    sort -k1,1 -k2,2n > $OUTPUT
+    rm -f $TMPREFN
+  elif [[ $BGLINES -eq $RFLINES ]]; then
+    paste <(sort -T . -k4,4g $BG) <(sort -T . -k4,4g $RF) | \
     cut -f 1,2,3,8 | sort -k1,1 -k2,2n > $OUTPUT
-  
-  rm -f $TMPREFN
+  else
+    paste <(sort -T . -k4,4g $BG) <(shuf -n $BGLINES $RF | sort -k4,4g) | \
+    cut -f 1,2,3,8 | sort -k1,1 -k2,2n > $OUTPUT
+  fi
   
   echo $OUTPUT
 }
@@ -98,7 +103,7 @@ export -f qnormalize
 if [[ ! -f $REFERENCE ]]; then
   >&2 echo "reference file not found, making an average distribution"
   INPUTI=$(parallel --no-notice -k -j $NTHREADS "iqrn {}" ::: $INPUT)
-  tmprefi="$(mktemp).bg"
+  tmprefi=$(mktemp)
   cat $INPUTI > $tmprefi
   REFERENCE=$tmprefi
 else
