@@ -25,7 +25,7 @@ docker run -u $UID -w $PWD -v $PWD:$PWD:rw vera/shart <name_of_script> <args>
 #### setup
 ```bash
 # pull the pre-built image, create and enter a container inside the directory with your data
-docker run --rm -it -h d4r -u $UID -w $PWD -v $PWD:$PWD:rw vera/shart
+docker run --rm -it -h d4r -u $UID:$(id -g) -w $PWD -v $PWD:$PWD:rw vera/shart
 
 # define number of CPU threads to use for the pipeline
 export NUMTHREADS=8
