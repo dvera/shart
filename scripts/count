@@ -75,7 +75,7 @@ count(){
   samtools view -H $INPUT | grep "^@SQ" | tr ':' '\t' | cut -f 3,5 | \
   awk -v minsize=$MINSIZE '$2>minsize' OFS='\t' | \
   bedtools makewindows -w $WINSIZE -g /dev/stdin | \
-  bedtools coverage -counts -sorted -c -a stdin -b $INPUT | \
+  bedtools coverage -counts -c -a stdin -b $INPUT | \
   awk -v scale=$SCALE '{print $1,$2,$3,$4*1000*(scale/($3-$2)) }' OFS='\t' > $OUTPUT
   
   echo $OUTPUT
